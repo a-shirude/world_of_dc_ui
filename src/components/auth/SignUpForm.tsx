@@ -1,50 +1,57 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { Link } from 'react-router-dom';
-import { UserPlus, Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { UserPlus } from 'lucide-react';
+import { authService } from '../../services/authService';
+import { RegisterData } from '../../types';
 
-const schema = yup.object({
-  name: yup.string().min(2, 'Name must be at least 2 characters').required('Name is required'),
-  email: yup.string().email('Invalid email').required('Email is required'),
-  password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
-  confirmPassword: yup.string()
-    .oneOf([yup.ref('password')], 'Passwords must match')
-    .required('Confirm password is required'),
-});
-
-interface SignUpFormData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
+type Step = 'mobile' | 'otp' | 'details';
 
 const SignUpForm: React.FC = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [step, setStep] = useState<Step>('mobile');
+  const [mobile, setMobile] = useState('');
+  const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignUpFormData>({
-    resolver: yupResolver(schema),
-  });
+  const { register, handleSubmit } = useForm<RegisterData>();
 
-  const onSubmit = async (data: SignUpFormData) => {
+  const sendOtp = async () => {
     try {
-      setIsLoading(true);
       setError('');
-      // TODO: Implement sign up logic
-      console.log('Sign up data:', data);
-      // For now, just show success message
-      alert('Account created successfully! Please sign in.');
+      setIsLoading(true);
+      await authService.sendOtp(mobile);
+      setStep('otp');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Sign up failed. Please try again.');
+      setError(err.response?.data?.message || 'Failed to send OTP.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    try {
+      setError('');
+      setIsLoading(true);
+      await authService.verifyOtp(mobile, otp);
+      setStep('details');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'OTP verification failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onRegister = async (data: RegisterData) => {
+    try {
+      setError('');
+      setIsLoading(true);
+      const payload: RegisterData = { ...data, mobileNumber: mobile };
+      await authService.register(payload);
+      navigate('/login');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed.');
     } finally {
       setIsLoading(false);
     }
@@ -57,147 +64,94 @@ const SignUpForm: React.FC = () => {
           <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-100">
             <UserPlus className="h-6 w-6 text-blue-600" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Join ComplaintHub today
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  {...register('name')}
-                  type="text"
-                  autoComplete="name"
-                  className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Enter your full name"
-                />
-              </div>
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-              )}
-            </div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  {...register('email')}
-                  type="email"
-                  autoComplete="email"
-                  className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Enter your email"
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  {...register('password')}
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  className="appearance-none rounded-md relative block w-full pl-10 pr-10 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  {...register('confirmPassword')}
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  className="appearance-none rounded-md relative block w-full pl-10 pr-10 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Confirm your password"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
-              )}
-            </div>
-          </div>
+          <p className="mt-2 text-center text-sm text-gray-600">Sign up with your mobile number</p>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
+            <div className="mt-4 rounded-md bg-red-50 p-4">
               <div className="text-sm text-red-700">{error}</div>
             </div>
           )}
+        </div>
 
-          <div>
+        {step === 'mobile' && (
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-gray-700">Mobile number</label>
+            <input
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              type="tel"
+              placeholder="9000000000"
+              className="appearance-none rounded-md relative block w-full pl-3 pr-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
             <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={sendOtp}
+              disabled={isLoading || mobile.trim().length < 10}
+              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md disabled:opacity-50"
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isLoading ? 'Sending OTP...' : 'Send OTP'}
             </button>
+            <div className="text-center text-sm text-gray-600">
+              <Link to="/login" className="text-blue-600">Sign in instead</Link>
+            </div>
           </div>
+        )}
 
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                Sign in
-              </Link>
-            </p>
+        {step === 'otp' && (
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-gray-700">Enter OTP</label>
+            <input
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              type="text"
+              placeholder="123456"
+              className="appearance-none rounded-md relative block w-full pl-3 pr-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={verifyOtp}
+                disabled={isLoading || otp.trim().length < 4}
+                className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md disabled:opacity-50"
+              >
+                {isLoading ? 'Verifying...' : 'Verify OTP'}
+              </button>
+              <button
+                onClick={sendOtp}
+                disabled={isLoading}
+                className="flex-1 py-2 px-4 bg-gray-200 text-gray-800 rounded-md disabled:opacity-50"
+              >
+                Resend
+              </button>
+            </div>
           </div>
-        </form>
+        )}
+
+        {step === 'details' && (
+          <form className="space-y-4" onSubmit={handleSubmit(onRegister)}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Full name</label>
+              <input {...register('name')} type="text" className="mt-1 block w-full rounded-md border-gray-300" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email (optional)</label>
+              <input {...register('email')} type="email" className="mt-1 block w-full rounded-md border-gray-300" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address (optional)</label>
+              <input {...register('address')} type="text" className="mt-1 block w-full rounded-md border-gray-300" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Aadhar Number (optional)</label>
+              <input {...register('aadharNumber')} type="text" className="mt-1 block w-full rounded-md border-gray-300" />
+            </div>
+            <div>
+              <button type="submit" disabled={isLoading} className="w-full py-2 px-4 bg-blue-600 text-white rounded-md disabled:opacity-50">
+                {isLoading ? 'Registering...' : 'Create account'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

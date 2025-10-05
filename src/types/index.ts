@@ -25,6 +25,16 @@ export interface AuthResponse {
   user: User;
 }
 
+// Registration and OTP types for citizen signup flow
+ 
+export interface RegisterData {
+  mobileNumber: string;
+  name: string;
+  email?: string;
+  address?: string;
+  aadharNumber?: string;
+}
+
 // Complaint Types
 export interface Complaint {
   id: string;
