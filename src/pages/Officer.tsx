@@ -4,14 +4,13 @@ import { Link } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 import { OfficerLoginCredentials, OfficerSignupData } from '../types';
-import { getRoleFromToken, getOfficerIdFromToken, getEmployeeIdFromToken } from '../utils/jwt';
 
 const Officer: React.FC = () => {
   // default to login view; officer can switch to sign-up
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { setAuth } = useAuth();
+  const { officerLogin } = useAuth();
 
   const { register, handleSubmit, formState: { errors } } = useForm<OfficerSignupData>();
   const { register: registerLogin, handleSubmit: handleLogin, formState: { errors: loginErrors } } = useForm<OfficerLoginCredentials>();
@@ -58,34 +57,11 @@ const Officer: React.FC = () => {
       setError('');
       setPendingMessage('');
       setIsLoading(true);
-      const res = await authService.officerLogin(data);
-      if (res.success && res.data?.token) {
-        const token = res.data.token;
-        
-        // Extract role and other info from JWT token
-        const role = getRoleFromToken(token);
-        const officerId = getOfficerIdFromToken(token);
-        const employeeId = getEmployeeIdFromToken(token);
-        
-        localStorage.setItem('token', token);
-        
-        // Store officer info in localStorage for persistence
-        const userData = { 
-          id: officerId || res.data.officerId || '', 
-          name: res.data.name || '', 
-          email: res.data.email || '', 
-          role: role, 
-          employeeId: employeeId,
-          createdAt: new Date().toISOString(), 
-          updatedAt: new Date().toISOString() 
-        };
-        
-        localStorage.setItem('user', JSON.stringify(userData));
-        setAuth({ token, user: userData as any });
-        window.location.href = '/officer-dashboard';
-      } else {
-        setError(res.message || 'Login failed. Please check your credentials.');
-      }
+      
+      await officerLogin(data);
+      
+      // If we get here, login was successful
+      window.location.href = '/officer-dashboard';
     } catch (err: any) {
       console.error('Login error:', err);
       if (err.response?.status === 401) {

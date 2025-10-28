@@ -1,20 +1,26 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { complaintService } from '../../services/complaintService';
+import { useAuth } from '../../contexts/AuthContext';
+import { ComplaintCategory, ComplaintPriority } from '../../types';
 
 interface CreateComplaintData {
-  title: string;
+  subject: string;
   description: string;
-  category: string;
-  priority: string;
+  category: ComplaintCategory;
+  priority: ComplaintPriority;
   location?: string;
-  attachments?: FileList;
+  files?: FileList;
 }
 
 const CreateComplaint: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
   const [error, setError] = useState('');
+  const { user } = useAuth();
+
+  // Hardcoded citizen for officer to create complaints on behalf of
+  const HARDCODED_CITIZEN_MOBILE = '9876543210';
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateComplaintData>();
 
@@ -26,7 +32,8 @@ const CreateComplaint: React.FC = () => {
 
       // Create form data for file uploads
       const formData = new FormData();
-      formData.append('title', data.title);
+      formData.append('mobileNumber', HARDCODED_CITIZEN_MOBILE); // Use hardcoded citizen
+      formData.append('subject', data.subject);
       formData.append('description', data.description);
       formData.append('category', data.category);
       formData.append('priority', data.priority);
@@ -34,17 +41,17 @@ const CreateComplaint: React.FC = () => {
         formData.append('location', data.location);
       }
       
-      // Add attachments if any
-      if (data.attachments && data.attachments.length > 0) {
-        for (let i = 0; i < data.attachments.length; i++) {
-          formData.append('attachments', data.attachments[i]);
+      // Add files if any
+      if (data.files && data.files.length > 0) {
+        for (let i = 0; i < data.files.length; i++) {
+          formData.append('files', data.files[i]);
         }
       }
 
       const response = await complaintService.createComplaint(formData);
       
       if (response.success) {
-        setSubmitMessage('Complaint created successfully! Complaint ID: ' + response.data.complaintNumber);
+        setSubmitMessage(`Complaint created successfully! Complaint Number: ${response.data.complaintNumber}`);
         reset();
       } else {
         setError(response.message || 'Failed to create complaint');
@@ -61,7 +68,10 @@ const CreateComplaint: React.FC = () => {
     <div className="max-w-3xl mx-auto">
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Complaint</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Create New Complaint</h1>
+          <p className="text-sm text-gray-600 mb-6">
+            Creating complaint on behalf of citizen: <span className="font-medium">{HARDCODED_CITIZEN_MOBILE}</span>
+          </p>
           
           {error && (
             <div className="mb-4 rounded-md bg-red-50 p-4">
@@ -76,21 +86,21 @@ const CreateComplaint: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Title */}
+            {/* Subject */}
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                Complaint Title *
+              <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+                Complaint Subject *
               </label>
               <input
-                {...register('title', { required: 'Title is required' })}
+                {...register('subject', { required: 'Subject is required' })}
                 type="text"
                 className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                  errors.title ? 'border-red-500' : ''
+                  errors.subject ? 'border-red-500' : ''
                 }`}
                 placeholder="Brief description of the issue"
               />
-              {errors.title && (
-                <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+              {errors.subject && (
+                <p className="mt-1 text-sm text-red-600">{errors.subject.message}</p>
               )}
             </div>
 
@@ -106,13 +116,21 @@ const CreateComplaint: React.FC = () => {
                 }`}
               >
                 <option value="">Select a category</option>
-                <option value="INFRASTRUCTURE">Infrastructure</option>
-                <option value="PUBLIC_SERVICES">Public Services</option>
-                <option value="ENVIRONMENT">Environment</option>
-                <option value="SAFETY">Safety</option>
-                <option value="TRANSPORTATION">Transportation</option>
-                <option value="UTILITIES">Utilities</option>
-                <option value="GENERAL">General</option>
+                <option value={ComplaintCategory.WATER_SUPPLY}>Water Supply</option>
+                <option value={ComplaintCategory.ELECTRICITY}>Electricity</option>
+                <option value={ComplaintCategory.ROADS_INFRASTRUCTURE}>Roads & Infrastructure</option>
+                <option value={ComplaintCategory.HEALTH_SERVICES}>Health Services</option>
+                <option value={ComplaintCategory.EDUCATION}>Education</option>
+                <option value={ComplaintCategory.SANITATION}>Sanitation</option>
+                <option value={ComplaintCategory.PUBLIC_DISTRIBUTION_SYSTEM}>Public Distribution System</option>
+                <option value={ComplaintCategory.REVENUE_SERVICES}>Revenue Services</option>
+                <option value={ComplaintCategory.POLICE_SERVICES}>Police Services</option>
+                <option value={ComplaintCategory.CORRUPTION}>Corruption</option>
+                <option value={ComplaintCategory.ENVIRONMENTAL_ISSUES}>Environmental Issues</option>
+                <option value={ComplaintCategory.AGRICULTURE}>Agriculture</option>
+                <option value={ComplaintCategory.PENSION_SERVICES}>Pension Services</option>
+                <option value={ComplaintCategory.BIRTH_DEATH_CERTIFICATE}>Birth/Death Certificate</option>
+                <option value={ComplaintCategory.OTHER}>Other</option>
               </select>
               {errors.category && (
                 <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
@@ -129,12 +147,12 @@ const CreateComplaint: React.FC = () => {
                 className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
                   errors.priority ? 'border-red-500' : ''
                 }`}
+                defaultValue={ComplaintPriority.MEDIUM}
               >
-                <option value="">Select priority level</option>
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
+                <option value={ComplaintPriority.LOW}>Low</option>
+                <option value={ComplaintPriority.MEDIUM}>Medium</option>
+                <option value={ComplaintPriority.HIGH}>High</option>
+                <option value={ComplaintPriority.URGENT}>Urgent</option>
               </select>
               {errors.priority && (
                 <p className="mt-1 text-sm text-red-600">{errors.priority.message}</p>
@@ -180,11 +198,11 @@ const CreateComplaint: React.FC = () => {
 
             {/* Attachments */}
             <div>
-              <label htmlFor="attachments" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="files" className="block text-sm font-medium text-gray-700">
                 Attachments
               </label>
               <input
-                {...register('attachments')}
+                {...register('files')}
                 type="file"
                 multiple
                 accept="image/*,.pdf,.doc,.docx"

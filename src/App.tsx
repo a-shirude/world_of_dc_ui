@@ -15,6 +15,7 @@ import Officer from './pages/Officer';
 import OfficerDashboard from './pages/OfficerDashboard';
 import Dashboard from './pages/Dashboard';
 import ComplaintList from './components/complaints/ComplaintList';
+import CreateComplaint from './components/complaints/CreateComplaint';
 
 // Main App Routes
 const AppRoutes: React.FC = () => {
@@ -57,7 +58,7 @@ const AppRoutes: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/complaints" element={<ComplaintList />} />
-                <Route path="/complaints/create" element={<div>Create Complaint Page (Coming Soon)</div>} />
+                <Route path="/complaints/create" element={<CreateComplaint />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin/approvals" element={<RoleProtectedRoute allowedRoles={["ADMIN","DISTRICT_COMMISSIONER"]}><AdminApproveOfficers /></RoleProtectedRoute>} />
                 <Route path="/users" element={<div>Users Page (Coming Soon)</div>} />

@@ -5,6 +5,19 @@ export interface User {
   name: string;
   role: UserRole;
   employeeId?: string;
+  mobileNumber?: string; // For citizens
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Citizen {
+  id: string;
+  mobileNumber: string;
+  name: string;
+  email?: string;
+  address?: string;
+  aadharNumber?: string;
+  isVerified: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,30 +96,63 @@ export interface OfficerUpdateData {
 // Complaint Types
 export interface Complaint {
   id: string;
-  title: string;
+  complaintNumber: string;
+  citizenId: string;
+  subject: string;
   description: string;
   category: ComplaintCategory;
   status: ComplaintStatus;
   priority: ComplaintPriority;
-  assignedTo?: string;
-  createdBy: string;
+  location?: string;
+  assignedToId?: string;
+  assignedById?: string;
+  assignmentRemarks?: string;
+  assignedAt?: string;
   createdAt: string;
   updatedAt: string;
-  attachments?: string[];
+  closedAt?: string;
+  documents?: ComplaintDocument[];
+  history?: ComplaintHistory[];
+}
+
+export interface ComplaintDocument {
+  id: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
+}
+
+export interface ComplaintHistory {
+  id: string;
+  complaintNumber: string;
+  status: ComplaintStatus;
+  remarks?: string;
+  updatedBy: string;
+  updatedAt: string;
 }
 
 export enum ComplaintCategory {
-  INFRASTRUCTURE = 'INFRASTRUCTURE',
-  PUBLIC_SERVICES = 'PUBLIC_SERVICES',
-  ENVIRONMENT = 'ENVIRONMENT',
-  SAFETY = 'SAFETY',
-  TRANSPORTATION = 'TRANSPORTATION',
-  UTILITIES = 'UTILITIES',
-  GENERAL = 'GENERAL'
+  WATER_SUPPLY = 'WATER_SUPPLY',
+  ELECTRICITY = 'ELECTRICITY',
+  ROADS_INFRASTRUCTURE = 'ROADS_INFRASTRUCTURE',
+  HEALTH_SERVICES = 'HEALTH_SERVICES',
+  EDUCATION = 'EDUCATION',
+  SANITATION = 'SANITATION',
+  PUBLIC_DISTRIBUTION_SYSTEM = 'PUBLIC_DISTRIBUTION_SYSTEM',
+  REVENUE_SERVICES = 'REVENUE_SERVICES',
+  POLICE_SERVICES = 'POLICE_SERVICES',
+  CORRUPTION = 'CORRUPTION',
+  ENVIRONMENTAL_ISSUES = 'ENVIRONMENTAL_ISSUES',
+  AGRICULTURE = 'AGRICULTURE',
+  PENSION_SERVICES = 'PENSION_SERVICES',
+  BIRTH_DEATH_CERTIFICATE = 'BIRTH_DEATH_CERTIFICATE',
+  OTHER = 'OTHER'
 }
 
 export enum ComplaintStatus {
-  OPEN = 'OPEN',
+  SUBMITTED = 'SUBMITTED',
   IN_PROGRESS = 'IN_PROGRESS',
   RESOLVED = 'RESOLVED',
   CLOSED = 'CLOSED'
@@ -120,19 +166,23 @@ export enum ComplaintPriority {
 }
 
 export interface CreateComplaintData {
-  title: string;
+  mobileNumber: string;
+  subject: string;
   description: string;
   category: ComplaintCategory;
   priority: ComplaintPriority;
+  location?: string;
+  files?: FileList;
 }
 
 export interface UpdateComplaintData {
-  title?: string;
+  subject?: string;
   description?: string;
   category?: ComplaintCategory;
   status?: ComplaintStatus;
   priority?: ComplaintPriority;
-  assignedTo?: string;
+  assignedToId?: string;
+  assignmentRemarks?: string;
 }
 
 // API Response Types

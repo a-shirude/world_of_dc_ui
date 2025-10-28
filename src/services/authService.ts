@@ -1,5 +1,5 @@
 import api from './api';
-import { LoginCredentials, AuthResponse, User, RegisterData, ApiResponse, OfficerLoginCredentials, OfficerSignupData } from '../types';
+import { LoginCredentials, AuthResponse, User, RegisterData, ApiResponse, OfficerLoginCredentials, OfficerSignupData, Complaint, ComplaintStatus } from '../types';
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
@@ -79,5 +79,17 @@ export const authService = {
   async updateOfficerProfile(data: any): Promise<ApiResponse<any>> {
     const response = await api.put<ApiResponse<any>>('/officer/profile', data);
     return response.data;
+  },
+
+  // Dashboard methods
+  async getComplaints(): Promise<Complaint[]> {
+    const response = await api.get<ApiResponse<Complaint[]>>('/complaints');
+    return response.data.data;
+  },
+
+  async getMyComplaints(): Promise<Complaint[]> {
+    // This will automatically use the current officer's ID from the backend
+    const response = await api.get<ApiResponse<Complaint[]>>('/complaints');
+    return response.data.data;
   },
 };
