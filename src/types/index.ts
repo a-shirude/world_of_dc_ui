@@ -96,6 +96,7 @@ export interface OfficerUpdateData {
 // Complaint Types
 export interface Complaint {
   id: string;
+  complaintId: number;
   complaintNumber: string;
   citizenId: string;
   subject: string;
@@ -261,7 +262,8 @@ export interface ComplaintUpdateRequest {
   assignedDepartment?: Department;
   departmentRemarks?: string;
   progressNotes?: string;
-  updateRemarks: string;
+  updateRemarks?: string;
+  assignmentRemarks?: string;
 }
 
 export interface ComplaintDepartmentAssignmentRequest {
