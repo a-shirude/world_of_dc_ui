@@ -1,41 +1,41 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { authService } from '../services/authService';
-import CreateComplaint from '../components/complaints/CreateComplaint';
-import MyComplaints from '../components/complaints/MyComplaints';
-import AdminApproveOfficers from './AdminApproveOfficers';
-import Profile from './Profile';
-import Sidebar from '../components/layout/Sidebar';
-import { ComplaintStatus, Complaint } from '../types';
+import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { authService } from "../services/authService";
+import CreateComplaint from "../components/complaints/CreateComplaint";
+import MyComplaints from "../components/complaints/MyComplaints";
+import AdminApproveOfficers from "./AdminApproveOfficers";
+import Profile from "./Profile";
+import Sidebar from "../components/layout/Sidebar";
+import { ComplaintStatus, Complaint } from "../types";
 
 const OfficerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Check if user is admin or district commissioner
-    const adminRoles = ['ADMIN', 'DISTRICT_COMMISSIONER'];
-    const userRole = user?.role || '';
+    const adminRoles = ["ADMIN", "DISTRICT_COMMISSIONER"];
+    const userRole = user?.role || "";
     const isUserAdmin = adminRoles.includes(userRole);
     setIsAdmin(isUserAdmin);
   }, [user]);
 
   const handleLogout = () => {
     logout();
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'create-complaint':
+      case "create-complaint":
         return <CreateComplaint />;
-      case 'my-complaints':
+      case "my-complaints":
         return <MyComplaints />;
-      case 'admin-approvals':
+      case "admin-approvals":
         return <AdminApproveOfficers />;
-      case 'profile':
+      case "profile":
         return <Profile />;
       default:
         return <DashboardContent isAdmin={isAdmin} user={user} />;
@@ -63,15 +63,27 @@ const OfficerDashboard: React.FC = () => {
               onClick={() => setSidebarOpen(true)}
               className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
-            <span className="text-lg font-semibold text-blue-600">DC Office</span>
+            <span className="text-lg font-semibold text-blue-600">
+              DC Office
+            </span>
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-semibold text-sm">
-                  {user?.name?.charAt(0) || 'U'}
+                  {user?.name?.charAt(0) || "U"}
                 </span>
               </div>
               <button
@@ -89,20 +101,24 @@ const OfficerDashboard: React.FC = () => {
           <div className="flex items-center justify-between px-6 py-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {activeTab === 'dashboard' && 'Dashboard'}
-                {activeTab === 'create-complaint' && 'Create Complaint'}
-                {activeTab === 'my-complaints' && 'My Complaints'}
-                {activeTab === 'admin-approvals' && 'Admin Approvals'}
-                {activeTab === 'profile' && 'Profile'}
+                {activeTab === "dashboard" && "Dashboard"}
+                {activeTab === "create-complaint" && "Create Complaint"}
+                {activeTab === "my-complaints" && "My Complaints"}
+                {activeTab === "admin-approvals" && "Admin Approvals"}
+                {activeTab === "profile" && "Profile"}
               </h1>
               <p className="text-sm text-gray-600">
-                Welcome back, {user?.name || 'User'}
+                Welcome back, {user?.name || "User"}
               </p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
-                <p className="text-xs text-gray-500">{user?.role || 'OFFICER'}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {user?.name || "User"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {user?.role || "OFFICER"}
+                </p>
               </div>
               <button
                 onClick={handleLogout}
@@ -115,28 +131,29 @@ const OfficerDashboard: React.FC = () => {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6">
-          {renderContent()}
-        </main>
+        <main className="flex-1 p-6">{renderContent()}</main>
       </div>
     </div>
   );
 };
 
 // Dashboard Content Component
-const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, user }) => {
+const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({
+  isAdmin,
+  user,
+}) => {
   const [stats, setStats] = useState({
     totalComplaints: 0,
     pendingComplaints: 0,
     resolvedComplaints: 0,
-    myComplaints: 0
+    myComplaints: 0,
   });
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardStats = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Fetch complaints based on user role - single API call
       let complaints: Complaint[];
       if (isAdmin) {
@@ -146,19 +163,23 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, 
         // For regular officers - get their own complaints
         complaints = await authService.getMyComplaints();
       }
-      
+
       // Filter complaints client-side for better performance
-      const pendingComplaints = complaints.filter(c => c.status === 'SUBMITTED');
-      const resolvedComplaints = complaints.filter(c => c.status === 'RESOLVED');
-      
+      const pendingComplaints = complaints.filter(
+        (c) => c.status === "CREATED"
+      );
+      const resolvedComplaints = complaints.filter(
+        (c) => c.status === "RESOLVED"
+      );
+
       setStats({
         totalComplaints: complaints.length,
         pendingComplaints: pendingComplaints.length,
         resolvedComplaints: resolvedComplaints.length,
-        myComplaints: isAdmin ? 0 : complaints.length // DC doesn't have "my complaints" concept
+        myComplaints: isAdmin ? 0 : complaints.length, // DC doesn't have "my complaints" concept
       });
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      console.error("Error fetching dashboard stats:", error);
     } finally {
       setLoading(false);
     }
@@ -182,14 +203,13 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, 
       <div className="bg-white overflow-hidden shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Welcome back, {user?.name || 'Officer'}!
+            Welcome back, {user?.name || "Officer"}!
           </h3>
           <div className="mt-2 max-w-xl text-sm text-gray-500">
             <p>
-              {isAdmin 
-                ? 'As a District Commissioner, you have full access to all complaints and administrative functions.'
-                : 'Manage complaints and track their progress from your dashboard.'
-              }
+              {isAdmin
+                ? "As a District Commissioner, you have full access to all complaints and administrative functions."
+                : "Manage complaints and track their progress from your dashboard."}
             </p>
           </div>
         </div>
@@ -209,9 +229,11 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, 
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    {isAdmin ? 'Total Complaints' : 'My Complaints'}
+                    {isAdmin ? "Total Complaints" : "My Complaints"}
                   </dt>
-                  <dd className="text-lg font-medium text-gray-900">{stats.totalComplaints}</dd>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {stats.totalComplaints}
+                  </dd>
                 </dl>
               </div>
             </div>
@@ -229,8 +251,12 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, 
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Pending</dt>
-                  <dd className="text-lg font-medium text-gray-900">{stats.pendingComplaints}</dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Pending
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {stats.pendingComplaints}
+                  </dd>
                 </dl>
               </div>
             </div>
@@ -248,8 +274,12 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, 
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Resolved</dt>
-                  <dd className="text-lg font-medium text-gray-900">{stats.resolvedComplaints}</dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Resolved
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {stats.resolvedComplaints}
+                  </dd>
                 </dl>
               </div>
             </div>
@@ -267,12 +297,16 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, 
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Resolution Rate</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Resolution Rate
+                  </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {stats.totalComplaints > 0 
-                      ? `${Math.round((stats.resolvedComplaints / stats.totalComplaints) * 100)}%`
-                      : '0%'
-                    }
+                    {stats.totalComplaints > 0
+                      ? `${Math.round(
+                          (stats.resolvedComplaints / stats.totalComplaints) *
+                            100
+                        )}%`
+                      : "0%"}
                   </dd>
                 </dl>
               </div>
@@ -284,10 +318,14 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, 
       {/* Quick Actions */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+            Quick Actions
+          </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <button
-              onClick={() => {/* This will be handled by parent component */}}
+              onClick={() => {
+                /* This will be handled by parent component */
+              }}
               className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors"
             >
               <div>
@@ -307,7 +345,9 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, 
             </button>
 
             <button
-              onClick={() => {/* This will be handled by parent component */}}
+              onClick={() => {
+                /* This will be handled by parent component */
+              }}
               className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors"
             >
               <div>
@@ -328,7 +368,9 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({ isAdmin, 
 
             {isAdmin && (
               <button
-                onClick={() => {/* This will be handled by parent component */}}
+                onClick={() => {
+                  /* This will be handled by parent component */
+                }}
                 className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors"
               >
                 <div>
