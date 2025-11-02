@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { complaintService } from "../../services/complaintService";
+import { officerService } from "../../services/officerService";
 import {
   Complaint,
   ComplaintStatus,
@@ -8,10 +9,12 @@ import {
   Department,
   ComplaintUpdateRequest,
   UserRole,
+  Officer,
 } from "../../types";
 import { getDepartmentDisplayName } from "../../utils/departmentUtils";
 import { getAllowedNextStatuses, statusDisplay } from "../../utils/statusUtils";
 import Toast from "../common/Toast";
+import CommentSection from "./CommentSection";
 
 interface ComplaintEditModalProps {
   complaint: Complaint;
@@ -35,6 +38,10 @@ const ComplaintEditModal: React.FC<ComplaintEditModalProps> = ({
   const [toastType, setToastType] = useState<"success" | "error" | "info">(
     "success"
   );
+  const [officers, setOfficers] = useState<Officer[]>([]);
+  const [officerSearchQuery, setOfficerSearchQuery] = useState("");
+  const [filteredOfficers, setFilteredOfficers] = useState<Officer[]>([]);
+  const [showOfficerDropdown, setShowOfficerDropdown] = useState(false);
 
   // Unified form state
   const [formData, setFormData] = useState({
@@ -43,11 +50,9 @@ const ComplaintEditModal: React.FC<ComplaintEditModalProps> = ({
     location: complaint.location || "",
     priority: complaint.priority || ComplaintPriority.MEDIUM,
     status: complaint.status || ComplaintStatus.CREATED,
-    progressNotes: complaint.progressNotes || "",
     departmentRemarks: complaint.departmentRemarks || "",
     assignedDepartment: complaint.assignedDepartment || Department.UNASSIGNED,
-    assignmentRemarks: complaint.assignmentRemarks || "",
-    updateRemarks: "",
+    assignedToId: complaint.assignedToId || "",
   });
 
   const isDistrictCommissioner = user?.role === UserRole.DISTRICT_COMMISSIONER;
@@ -61,16 +66,77 @@ const ComplaintEditModal: React.FC<ComplaintEditModalProps> = ({
         location: complaint.location || "",
         priority: complaint.priority || ComplaintPriority.MEDIUM,
         status: complaint.status || ComplaintStatus.CREATED,
-        progressNotes: complaint.progressNotes || "",
         departmentRemarks: complaint.departmentRemarks || "",
         assignedDepartment:
           complaint.assignedDepartment || Department.UNASSIGNED,
-        assignmentRemarks: complaint.assignmentRemarks || "",
-        updateRemarks: "",
+        assignedToId: complaint.assignedToId || "",
       });
       setError("");
+
+      // Fetch officers list when modal opens
+      const fetchOfficers = async () => {
+        try {
+          const officersList = await officerService.getAllOfficers();
+          const approvedOfficers = officersList.filter((o) => o.isApproved);
+          setOfficers(approvedOfficers);
+          setFilteredOfficers(approvedOfficers);
+        } catch (err) {
+          console.error("Failed to fetch officers:", err);
+        }
+      };
+      fetchOfficers();
+      setOfficerSearchQuery("");
+      setShowOfficerDropdown(false);
     }
   }, [isOpen, complaint]);
+
+  // Search officers when query changes
+  useEffect(() => {
+    const searchOfficers = async () => {
+      if (officerSearchQuery.trim().length >= 2) {
+        try {
+          const results = await officerService.getAllOfficers(
+            officerSearchQuery
+          );
+          const approvedResults = results.filter((o) => o.isApproved);
+          setFilteredOfficers(approvedResults);
+          setShowOfficerDropdown(true);
+        } catch (err) {
+          console.error("Failed to search officers:", err);
+        }
+      } else if (officerSearchQuery.trim().length === 0) {
+        // Show all officers when search is cleared
+        setFilteredOfficers(officers.filter((o) => o.isApproved));
+        setShowOfficerDropdown(false);
+      } else if (officerSearchQuery.trim().length === 1) {
+        // Don't search with just 1 character, but show all officers
+        setFilteredOfficers(officers.filter((o) => o.isApproved));
+        setShowOfficerDropdown(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      searchOfficers();
+    }, 300); // Debounce search by 300ms
+
+    return () => clearTimeout(debounceTimer);
+  }, [officerSearchQuery, officers]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".officer-search-container")) {
+        setShowOfficerDropdown(false);
+      }
+    };
+
+    if (showOfficerDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showOfficerDropdown]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -106,14 +172,16 @@ const ComplaintEditModal: React.FC<ComplaintEditModalProps> = ({
         location: formData.location,
         priority: formData.priority,
         status: formData.status,
-        progressNotes: formData.progressNotes,
-        updateRemarks: formData.updateRemarks,
         // Include department assignment if DC and department changed
         ...(isDistrictCommissioner &&
           formData.assignedDepartment !== complaint.assignedDepartment && {
             assignedDepartment: formData.assignedDepartment,
-            assignmentRemarks: formData.assignmentRemarks,
+            departmentRemarks: formData.departmentRemarks,
           }),
+        // Include officer assignment if changed
+        ...(formData.assignedToId !== complaint.assignedToId && {
+          assignedToId: formData.assignedToId,
+        }),
       };
 
       const updatedComplaint = await complaintService.updateComplaint(
@@ -294,6 +362,126 @@ const ComplaintEditModal: React.FC<ComplaintEditModalProps> = ({
                     className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
+
+                <div className="relative officer-search-container">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Assign to Officer
+                  </label>
+                  {complaint.assignedToId && (
+                    <div className="mb-2 text-sm text-gray-600">
+                      <span className="font-medium">Currently Assigned:</span>{" "}
+                      {officers.find((o) => o.id === complaint.assignedToId)
+                        ? `${
+                            officers.find(
+                              (o) => o.id === complaint.assignedToId
+                            )?.name
+                          } (${
+                            officers.find(
+                              (o) => o.id === complaint.assignedToId
+                            )?.employeeId
+                          })`
+                        : complaint.assignedToId}
+                    </div>
+                  )}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={
+                        formData.assignedToId && !officerSearchQuery
+                          ? officers.find((o) => o.id === formData.assignedToId)
+                            ? `${
+                                officers.find(
+                                  (o) => o.id === formData.assignedToId
+                                )?.name
+                              } (${
+                                officers.find(
+                                  (o) => o.id === formData.assignedToId
+                                )?.employeeId
+                              })`
+                            : ""
+                          : officerSearchQuery
+                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setOfficerSearchQuery(value);
+                        // Clear selected officer if user starts typing
+                        if (value && formData.assignedToId) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            assignedToId: "",
+                          }));
+                        }
+                        if (!value) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            assignedToId: "",
+                          }));
+                          setShowOfficerDropdown(false);
+                        }
+                      }}
+                      onFocus={() => {
+                        if (
+                          officerSearchQuery.length >= 2 ||
+                          filteredOfficers.length > 0
+                        ) {
+                          setShowOfficerDropdown(true);
+                        }
+                      }}
+                      placeholder="Search officer by name (type at least 2 characters)..."
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    {(formData.assignedToId || officerSearchQuery) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            assignedToId: "",
+                          }));
+                          setOfficerSearchQuery("");
+                          setShowOfficerDropdown(false);
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none"
+                        title="Clear"
+                      >
+                        ×
+                      </button>
+                    )}
+                    {showOfficerDropdown && filteredOfficers.length > 0 && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {filteredOfficers.map((officer) => (
+                          <div
+                            key={officer.id}
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                assignedToId: officer.id,
+                              }));
+                              setOfficerSearchQuery("");
+                              setShowOfficerDropdown(false);
+                            }}
+                            className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="font-medium text-gray-900">
+                              {officer.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {officer.employeeId} -{" "}
+                              {officer.role?.replace("_", " ") || "Officer"}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {showOfficerDropdown &&
+                      officerSearchQuery.length >= 2 &&
+                      filteredOfficers.length === 0 && (
+                        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg p-4 text-center text-gray-500">
+                          No officers found matching "{officerSearchQuery}"
+                        </div>
+                      )}
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -339,55 +527,15 @@ const ComplaintEditModal: React.FC<ComplaintEditModalProps> = ({
                           ))}
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Assignment Remarks
-                      </label>
-                      <textarea
-                        name="assignmentRemarks"
-                        value={formData.assignmentRemarks}
-                        onChange={handleInputChange}
-                        rows={3}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="Explain why this department is being assigned (optional)"
-                      />
-                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Progress Section */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Progress & Comments
-                </h3>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Progress Notes / Comments
-                  </label>
-                  <textarea
-                    name="progressNotes"
-                    value={formData.progressNotes}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Describe the current progress, what has been done, and what's next"
-                  />
-                </div>
-              </div>
-
-              {/* Update Remarks */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Update Remarks
-                </label>
-                <textarea
-                  name="updateRemarks"
-                  value={formData.updateRemarks}
-                  onChange={handleInputChange}
-                  rows={2}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Describe what changes you made and why (optional)"
+              {/* Comments Section */}
+              <div className="border-t pt-6 mt-6">
+                <CommentSection
+                  complaintId={complaint.id}
+                  initialComments={complaint.comments || []}
                 />
               </div>
 

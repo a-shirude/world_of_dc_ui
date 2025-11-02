@@ -101,7 +101,6 @@ export interface Complaint {
   citizenId: string;
   subject: string;
   description: string;
-  category: ComplaintCategory;
   status: ComplaintStatus;
   priority: ComplaintPriority;
   location?: string;
@@ -116,9 +115,8 @@ export interface Complaint {
   assignmentRemarks?: string;
   assignedAt?: string;
 
-  // Progress tracking (via comments only)
-  progressNotes?: string;
-  lastProgressUpdate?: string;
+  // Comments
+  comments?: Comment[];
 
   // Creator tracking
   createdById?: string;
@@ -236,7 +234,6 @@ export interface CreateComplaintData {
   mobileNumber: string;
   subject: string;
   description: string;
-  category: ComplaintCategory;
   priority: ComplaintPriority;
   location?: string;
   files?: FileList;
@@ -245,7 +242,6 @@ export interface CreateComplaintData {
 export interface UpdateComplaintData {
   subject?: string;
   description?: string;
-  category?: ComplaintCategory;
   status?: ComplaintStatus;
   priority?: ComplaintPriority;
   assignedToId?: string;
@@ -261,15 +257,42 @@ export interface ComplaintUpdateRequest {
   status?: ComplaintStatus;
   assignedDepartment?: Department;
   departmentRemarks?: string;
-  progressNotes?: string;
-  updateRemarks?: string;
-  assignmentRemarks?: string;
+  assignedToId?: string; // Officer ID to assign/reassign the complaint to
 }
 
 export interface ComplaintDepartmentAssignmentRequest {
   complaintId: number;
   department: Department;
   assignmentRemarks: string;
+}
+
+// Comment Types
+export interface Comment {
+  id: string;
+  complaintId: string;
+  commenterId: string;
+  commenterName?: string;
+  commenterRole: string;
+  text: string;
+  attachments?: CommentAttachment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommentAttachment {
+  id: string;
+  commentId: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  attachmentType: "image" | "video" | "document";
+  uploadedAt: string;
+}
+
+export interface CommentUpdateRequest {
+  commentId: string;
+  text: string;
 }
 
 // Removed percentage-based progress updates; use ComplaintUpdateRequest with progressNotes

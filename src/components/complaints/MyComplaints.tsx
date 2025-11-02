@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { complaintService } from "../../services/complaintService";
-import {
-  Complaint,
-  ComplaintStatus,
-  ComplaintCategory,
-  UserRole,
-} from "../../types";
+import { officerService } from "../../services/officerService";
+import { Complaint, ComplaintStatus, UserRole, Officer } from "../../types";
 import ComplaintEditModal from "./ComplaintEditModal";
 import { getDepartmentDisplayName } from "../../utils/departmentUtils";
 
 const MyComplaints: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,9 +16,7 @@ const MyComplaints: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<ComplaintStatus | "ALL">(
     "ALL"
   );
-  const [filterCategory, setFilterCategory] = useState<
-    ComplaintCategory | "ALL"
-  >("ALL");
+  const [officers, setOfficers] = useState<Officer[]>([]);
 
   // Edit modal state
   const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(
@@ -34,8 +30,23 @@ const MyComplaints: React.FC = () => {
   useEffect(() => {
     if (user?.id) {
       fetchComplaints();
+      fetchOfficers();
     }
   }, [user?.id]);
+
+  const fetchOfficers = async () => {
+    try {
+      const officersList = await officerService.getAllOfficers();
+      setOfficers(officersList);
+    } catch (err) {
+      console.error("Failed to fetch officers:", err);
+    }
+  };
+
+  const getOfficerName = (officerId: string): string => {
+    const officer = officers.find((o) => o.id === officerId);
+    return officer ? `${officer.name} (${officer.employeeId})` : officerId;
+  };
 
   const fetchComplaints = async () => {
     try {
@@ -54,9 +65,7 @@ const MyComplaints: React.FC = () => {
   const filteredComplaints = complaints.filter((complaint) => {
     const statusMatch =
       filterStatus === "ALL" || complaint.status === filterStatus;
-    const categoryMatch =
-      filterCategory === "ALL" || complaint.category === filterCategory;
-    return statusMatch && categoryMatch;
+    return statusMatch;
   });
 
   const getStatusColor = (status: ComplaintStatus) => {
@@ -187,62 +196,6 @@ const MyComplaints: React.FC = () => {
                 <option value={ComplaintStatus.CLOSED}>Closed</option>
               </select>
             </div>
-
-            <div>
-              <label
-                htmlFor="category-filter"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Filter by Category
-              </label>
-              <select
-                id="category-filter"
-                value={filterCategory}
-                onChange={(e) =>
-                  setFilterCategory(e.target.value as ComplaintCategory | "ALL")
-                }
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="ALL">All Categories</option>
-                <option value={ComplaintCategory.WATER_SUPPLY}>
-                  Water Supply
-                </option>
-                <option value={ComplaintCategory.ELECTRICITY}>
-                  Electricity
-                </option>
-                <option value={ComplaintCategory.ROADS_INFRASTRUCTURE}>
-                  Roads Infrastructure
-                </option>
-                <option value={ComplaintCategory.HEALTH_SERVICES}>
-                  Health Services
-                </option>
-                <option value={ComplaintCategory.EDUCATION}>Education</option>
-                <option value={ComplaintCategory.SANITATION}>Sanitation</option>
-                <option value={ComplaintCategory.PUBLIC_DISTRIBUTION_SYSTEM}>
-                  Public Distribution System
-                </option>
-                <option value={ComplaintCategory.REVENUE_SERVICES}>
-                  Revenue Services
-                </option>
-                <option value={ComplaintCategory.POLICE_SERVICES}>
-                  Police Services
-                </option>
-                <option value={ComplaintCategory.CORRUPTION}>Corruption</option>
-                <option value={ComplaintCategory.ENVIRONMENTAL_ISSUES}>
-                  Environmental Issues
-                </option>
-                <option value={ComplaintCategory.AGRICULTURE}>
-                  Agriculture
-                </option>
-                <option value={ComplaintCategory.PENSION_SERVICES}>
-                  Pension Services
-                </option>
-                <option value={ComplaintCategory.BIRTH_DEATH_CERTIFICATE}>
-                  Birth/Death Certificate
-                </option>
-                <option value={ComplaintCategory.OTHER}>Other</option>
-              </select>
-            </div>
           </div>
 
           {/* Complaints List */}
@@ -262,7 +215,10 @@ const MyComplaints: React.FC = () => {
               {filteredComplaints.map((complaint) => (
                 <div
                   key={complaint.complaintId}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() =>
+                    navigate(`/dashboard/complaints/${complaint.id}`)
+                  }
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
@@ -296,7 +252,10 @@ const MyComplaints: React.FC = () => {
                       {(isDistrictCommissioner ||
                         complaint.createdById === user?.id) && (
                         <button
-                          onClick={() => handleEditComplaint(complaint)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditComplaint(complaint);
+                          }}
                           className="px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                         >
                           Edit
@@ -306,10 +265,6 @@ const MyComplaints: React.FC = () => {
                   </div>
 
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                    <div>
-                      <span className="font-medium">Category:</span>{" "}
-                      {complaint.category.replace("_", " ")}
-                    </div>
                     {complaint.location && (
                       <div>
                         <span className="font-medium">Location:</span>{" "}
@@ -329,7 +284,7 @@ const MyComplaints: React.FC = () => {
                     {isDistrictCommissioner && complaint.assignedToId && (
                       <div>
                         <span className="font-medium">Assigned To:</span>{" "}
-                        Officer ID {complaint.assignedToId}
+                        {getOfficerName(complaint.assignedToId)}
                       </div>
                     )}
                     <div>

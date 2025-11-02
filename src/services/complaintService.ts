@@ -6,12 +6,13 @@ import {
   PaginatedResponse,
   ComplaintStatus,
   ComplaintPriority,
-  ComplaintCategory,
   ApiResponse,
   ComplaintHistory,
   ComplaintDocument,
   ComplaintUpdateRequest,
   ComplaintDepartmentAssignmentRequest,
+  Comment,
+  CommentUpdateRequest,
 } from "../types";
 
 export const complaintService = {
@@ -26,8 +27,8 @@ export const complaintService = {
   },
 
   async getComplaintById(id: string): Promise<Complaint> {
-    const response = await api.get<Complaint>(`/complaints/${id}`);
-    return response.data;
+    const response = await api.get<ApiResponse<Complaint>>(`/complaints/${id}`);
+    return response.data.data;
   },
 
   async createComplaint(data: FormData): Promise<
@@ -101,15 +102,6 @@ export const complaintService = {
     return response.data.data;
   },
 
-  async getComplaintsByCategory(
-    category: ComplaintCategory
-  ): Promise<Complaint[]> {
-    const response = await api.get<ApiResponse<Complaint[]>>(
-      `/complaints?category=${category}`
-    );
-    return response.data.data;
-  },
-
   async getAllComplaints(): Promise<Complaint[]> {
     const response = await api.get<ApiResponse<Complaint[]>>("/complaints");
     return response.data.data;
@@ -135,4 +127,24 @@ export const complaintService = {
   },
 
   // Percentage-based progress endpoint removed; use updateComplaint with progressNotes
+
+  // Comment methods
+  async getComments(complaintId: string): Promise<Comment[]> {
+    const response = await api.get<ApiResponse<Comment[]>>(
+      `/complaints/${complaintId}/comments`
+    );
+    return response.data.data;
+  },
+
+  async updateComment(request: CommentUpdateRequest): Promise<Comment> {
+    const response = await api.put<ApiResponse<Comment>>(
+      `/complaints/comments/${request.commentId}`,
+      request
+    );
+    return response.data.data;
+  },
+
+  async deleteComment(commentId: string): Promise<void> {
+    await api.delete(`/complaints/comments/${commentId}`);
+  },
 };

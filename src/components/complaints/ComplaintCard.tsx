@@ -77,7 +77,10 @@ const ComplaintCard: React.FC<ComplaintCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+    <div
+      className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => onView?.(complaint)}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
@@ -115,28 +118,6 @@ const ComplaintCard: React.FC<ComplaintCardProps> = ({
               <span>ID: {complaint.id.slice(0, 8)}</span>
             </div>
           </div>
-        </div>
-
-        <div className="flex items-center space-x-2 ml-4">
-          {onView && (
-            <button
-              onClick={() => onView(complaint)}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              View
-            </button>
-          )}
-          {onEdit && (
-            <button
-              onClick={() => onEdit(complaint)}
-              className="text-gray-600 hover:text-gray-800 text-sm font-medium"
-            >
-              Edit
-            </button>
-          )}
-          <button className="text-gray-400 hover:text-gray-600">
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
         </div>
       </div>
     </div>
