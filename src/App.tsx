@@ -7,6 +7,7 @@ import LoginForm from './components/auth/LoginForm';
 import SignUpForm from './components/auth/SignUpForm';
 import OtpVerification from './components/auth/OtpVerification';
 import Home from './pages/Home';
+import CustomerPage from './pages/CustomerPage';
 import CitizenHome from './pages/CitizenHome';
 import Profile from './pages/Profile';
 import AdminApproveOfficers from './pages/AdminApproveOfficers';
@@ -24,7 +25,8 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<Officer />} />
-      <Route path="/customer" element={<Home />} />
+      <Route path="/customer" element={<CustomerPage />} />
+      <Route path="/customer2" element={<Home />} />
       <Route path="/verify-otp" element={<OtpVerification />} />
       <Route 
         path="/login" 
