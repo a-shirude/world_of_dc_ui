@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { complaintService } from "../../services/complaintService";
 import api from "../../services/api";
-import { Comment, CommentUpdateRequest } from "../../types";
+import { Comment, CommentUpdateRequest, CommentAttachment } from "../../types";
 import {
   MessageCircle,
   Edit2,
@@ -11,6 +11,7 @@ import {
   Image,
   Video,
   File,
+  Paperclip,
   X,
 } from "lucide-react";
 
@@ -425,9 +426,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                   e.stopPropagation();
                   setShowAttachmentOptions(!showAttachmentOptions);
                 }}
-                className="text-gray-500 hover:text-gray-700 p-2 rounded-md hover:bg-gray-100"
+                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 flex items-center space-x-2"
               >
-                <File className="h-4 w-4" />
+                <Paperclip className="h-5 w-5" />
+                <span className="text-sm">Attach</span>
               </button>
               {showAttachmentOptions && (
                 <div className="flex space-x-2">
