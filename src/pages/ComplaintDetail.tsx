@@ -197,7 +197,9 @@ const ComplaintDetail: React.FC = () => {
 
   const canEdit =
     user?.role === "DISTRICT_COMMISSIONER" ||
-    complaint.createdById === user?.id;
+    user?.role === "ADDITIONAL_DISTRICT_COMMISSIONER" ||
+    complaint.createdById === user?.id ||
+    complaint.assignedToId === user?.id;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

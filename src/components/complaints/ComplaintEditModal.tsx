@@ -55,8 +55,13 @@ const ComplaintEditModal: React.FC<ComplaintEditModalProps> = ({
     assignedToId: complaint.assignedToId || "",
   });
 
-  const isDistrictCommissioner = user?.role === UserRole.DISTRICT_COMMISSIONER;
-  const canEdit = isDistrictCommissioner || complaint.createdById === user?.id;
+  const isAdminRole =
+    user?.role === UserRole.DISTRICT_COMMISSIONER ||
+    user?.role === UserRole.ADDITIONAL_DISTRICT_COMMISSIONER;
+  const canEdit =
+    isAdminRole ||
+    complaint.createdById === user?.id ||
+    complaint.assignedToId === user?.id;
 
   useEffect(() => {
     if (isOpen) {
@@ -186,7 +191,7 @@ const ComplaintEditModal: React.FC<ComplaintEditModalProps> = ({
         priority: formData.priority,
         status: formData.status,
         // Include department assignment if DC and department changed
-        ...(isDistrictCommissioner &&
+        ...(isAdminRole &&
           formData.assignedDepartment !== complaint.assignedDepartment && {
             assignedDepartment: formData.assignedDepartment,
             departmentRemarks: formData.departmentRemarks,
@@ -543,7 +548,7 @@ const ComplaintEditModal: React.FC<ComplaintEditModalProps> = ({
               </div>
 
               {/* Department Assignment Section - Only for DC */}
-              {isDistrictCommissioner && (
+              {isAdminRole && (
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">
                     Department Assignment

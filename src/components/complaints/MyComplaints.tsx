@@ -215,20 +215,20 @@ const MyComplaints: React.FC = () => {
               {filteredComplaints.map((complaint) => (
                 <div
                   key={complaint.complaintId}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  className="w-full max-w-4xl border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() =>
                     navigate(`/dashboard/complaints/${complaint.id}`)
                   }
                 >
                   <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
                         {complaint.subject}
                       </h3>
                       <p className="text-sm text-gray-600 mb-2">
                         Complaint #{complaint.complaintNumber}
                       </p>
-                      <p className="text-gray-700 text-sm line-clamp-2">
+                      <p className="text-gray-700 text-sm line-clamp-2 overflow-hidden">
                         {complaint.description}
                       </p>
                     </div>
@@ -250,7 +250,8 @@ const MyComplaints: React.FC = () => {
                         </span>
                       </div>
                       {(isDistrictCommissioner ||
-                        complaint.createdById === user?.id) && (
+                        complaint.createdById === user?.id ||
+                        complaint.assignedToId === user?.id) && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -266,14 +267,14 @@ const MyComplaints: React.FC = () => {
 
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                     {complaint.location && (
-                      <div>
+                      <div className="truncate max-w-xs">
                         <span className="font-medium">Location:</span>{" "}
                         {complaint.location}
                       </div>
                     )}
                     {complaint.assignedDepartment &&
                       complaint.assignedDepartment !== "UNASSIGNED" && (
-                        <div>
+                        <div className="truncate max-w-xs">
                           <span className="font-medium">Department:</span>{" "}
                           {getDepartmentDisplayName(
                             complaint.assignedDepartment
@@ -282,17 +283,17 @@ const MyComplaints: React.FC = () => {
                       )}
                     {/* Percentage-based progress removed */}
                     {complaint.assignedToId && (
-                      <div>
+                      <div className="truncate max-w-xs">
                         <span className="font-medium">Assigned To:</span>{" "}
                         {getOfficerName(complaint.assignedToId)}
                       </div>
                     )}
-                    <div>
+                    <div className="truncate max-w-xs">
                       <span className="font-medium">Created:</span>{" "}
                       {formatDate(complaint.createdAt)}
                     </div>
                     {complaint.updatedAt !== complaint.createdAt && (
-                      <div>
+                      <div className="truncate max-w-xs">
                         <span className="font-medium">Updated:</span>{" "}
                         {formatDate(complaint.updatedAt)}
                       </div>
