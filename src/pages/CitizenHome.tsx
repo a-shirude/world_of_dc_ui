@@ -314,6 +314,27 @@ const CitizenHome: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Quick Services */}
+        <section className="mb-12" id="services">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Quick Services
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+            {quickServices.map((service, index) => (
+              <button
+                key={index}
+                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600/60 flex flex-col items-center justify-center space-y-3"
+              >
+                <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center ring-1 ring-black/5">
+                  <service.icon className="h-7 w-7 text-blue-600" />
+                </div>
+                <span className="font-semibold text-gray-900 text-center text-sm sm:text-base">
+                  {service.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
         {/* Analytics Cards (5) */}
         <section className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -335,28 +356,6 @@ const CitizenHome: React.FC = () => {
                   {item.value}
                 </p>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Quick Services */}
-        <section className="mb-12" id="services">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Quick Services
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
-            {quickServices.map((service, index) => (
-              <button
-                key={index}
-                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600/60 flex flex-col items-center justify-center space-y-3"
-              >
-                <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center ring-1 ring-black/5">
-                  <service.icon className="h-7 w-7 text-blue-600" />
-                </div>
-                <span className="font-semibold text-gray-900 text-center text-sm sm:text-base">
-                  {service.name}
-                </span>
-              </button>
             ))}
           </div>
         </section>
