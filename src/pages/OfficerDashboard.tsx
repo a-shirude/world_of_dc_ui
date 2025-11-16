@@ -205,7 +205,7 @@ const DashboardContent: React.FC<{ isAdmin: boolean; user: any }> = ({
           <h3 className="text-lg leading-6 font-medium text-gray-900">
             Welcome back, {user?.name || "Officer"}!
           </h3>
-          <div className="mt-2 max-w-xl text-sm text-gray-500">
+          <div className="mt-2 max-w-xll text-sm text-gray-500">
             <p>
               {isAdmin
                 ? "As a District Commissioner, you have full access to all complaints and administrative functions."

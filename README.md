@@ -96,6 +96,7 @@ This frontend is designed to work with a Java Spring Boot backend. The expected 
 ### Authentication Endpoints
 
 - `POST /api/auth/login` - User login
+- `POST /api/auth/officer-login` - Officer login
 - `POST /api/auth/logout` - User logout
 - `GET /api/auth/me` - Get current user
 - `POST /api/auth/refresh` - Refresh token
@@ -150,3 +151,6 @@ This project is licensed under the MIT License.
 Login employeeId: EMP001
 Password: Passw0rd!
 Role: OFFICER
+
+credentials -
+admin/Admin@1
