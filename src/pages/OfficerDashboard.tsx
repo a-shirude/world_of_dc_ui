@@ -5,7 +5,7 @@ import CreateComplaint from "../components/complaints/CreateComplaint";
 import MyComplaints from "../components/complaints/MyComplaints";
 import AdminApproveOfficers from "./AdminApproveOfficers";
 import Profile from "./Profile";
-import Sidebar from "../components/layout/Sidebar";
+import AppShell from "../components/layout/AppShell";
 import { Complaint, Officer, OfficerUpdateData } from "../types";
 import {
   Designation,
@@ -175,6 +175,8 @@ const OfficerDashboard: React.FC = () => {
         return <AdminApproveOfficers />;
       case "profile":
         return <Profile />;
+      case "complaint-board":
+        return <ComplaintKanbanBoard />;
       default:
         return <DashboardContent isAdmin={isAdmin} user={user} />;
     }
@@ -183,7 +185,7 @@ const OfficerDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <Sidebar
+      <AppShell
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         activeTab={activeTab}
@@ -241,6 +243,7 @@ const OfficerDashboard: React.FC = () => {
                 {activeTab === "my-complaints" && "My Complaints"}
                 {activeTab === "admin-approvals" && "Admin Approvals"}
                 {activeTab === "profile" && "Profile"}
+                {activeTab === "complaint-board" && "Complaint Board"}
               </h1>
               <p className="text-sm text-gray-600">
                 Welcome back, {user?.name || "User"}
