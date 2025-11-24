@@ -56,6 +56,26 @@ const CitizenHome: React.FC = () => {
   });
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
   const [isGrievanceDialogOpen, setIsGrievanceDialogOpen] = useState(false);
+
+  // Default slides to show when backend returns no data
+  const defaultSlides: CarouselSlide[] = [
+    {
+      title: "Digital Assam Initiative",
+      description:
+        "Empowering citizens through digital governance and e-services",
+      backgroundColor: "blue",
+    },
+    {
+      title: "Quick Grievance Resolution",
+      description: "File and track your complaints seamlessly online",
+      backgroundColor: "green",
+    },
+    {
+      title: "Citizen-Centric Services",
+      description: "Access government schemes and programs with ease",
+      backgroundColor: "purple",
+    },
+  ];
   const [analyticsData, setAnalyticsData] = useState([
     {
       label: "Grievances Filed",
@@ -331,14 +351,16 @@ const CitizenHome: React.FC = () => {
     try {
       setIsLoadingCarousel(true);
       const response = await authService.getCarouselSlides();
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.length > 0) {
         setSlides(response.data);
       } else {
-        setSlides([]);
+        // Use default slides when no data is available
+        setSlides(defaultSlides);
       }
     } catch (error) {
       console.error("Error fetching carousel slides:", error);
-      setSlides([]);
+      // Use default slides on error
+      setSlides(defaultSlides);
     } finally {
       setIsLoadingCarousel(false);
     }
