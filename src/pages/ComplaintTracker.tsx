@@ -713,11 +713,11 @@ export default function ComplaintCockpitBoard() {
         newComment.updatedAt = updatedComment.updatedAt;
       }
 
-      // setComplaints(prev => prev.map(c =>
-      //   c.id === selectedTicketId
-      //     ? { ...c, comments: [...(c.comments || []), newComment] }
-      //     : c
-      // ));
+      setComplaints(prev => prev.map(c =>
+        c.id === selectedTicketId
+          ? { ...c, comments: [...(c.comments || []), newComment] }
+          : c
+      ));
 
       showToast('Comment added successfully', 'success');
       setCommentText('');
