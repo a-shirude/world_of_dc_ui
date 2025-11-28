@@ -18,7 +18,7 @@ import {
   X,
   Youtube,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import image1 from "../assets/image-1.jpg";
 import image2 from "../assets/image-2.jpg";
@@ -82,6 +82,7 @@ const CitizenHome: React.FC = () => {
   const [isLoadingComplaintDetails, setIsLoadingComplaintDetails] =
     useState(false);
   const [trackError, setTrackError] = useState("");
+  const [trackSearchQuery, setTrackSearchQuery] = useState("");
 
   // Default slides to show when backend returns no data
   const defaultSlides: CarouselSlide[] = [
@@ -596,11 +597,7 @@ const CitizenHome: React.FC = () => {
         if (!isAuthenticated) {
           openLoginModal();
         } else {
-          window.open(
-            "https://assam.gov.in/",
-            "_blank",
-            "noopener,noreferrer"
-          );
+          window.open("https://assam.gov.in/", "_blank", "noopener,noreferrer");
         }
         break;
       default:
@@ -620,6 +617,7 @@ const CitizenHome: React.FC = () => {
     setCitizenComplaints([]);
     setSelectedComplaint(null);
     setComplaintDetails(null);
+    setTrackSearchQuery("");
   };
 
   const fetchCitizenComplaints = async () => {
@@ -680,6 +678,17 @@ const CitizenHome: React.FC = () => {
       setIsLoadingComplaintDetails(false);
     }
   };
+
+  // Memoize filtered complaints to prevent unnecessary recalculations
+  const filteredComplaints = useMemo(() => {
+    if (!trackSearchQuery.trim()) return citizenComplaints;
+    const query = trackSearchQuery.toLowerCase();
+    return citizenComplaints.filter((complaint) => {
+      const subject = (complaint.subject || "").toLowerCase();
+      const description = (complaint.description || "").toLowerCase();
+      return subject.includes(query) || description.includes(query);
+    });
+  }, [citizenComplaints, trackSearchQuery]);
 
   const formatReadableDate = (value?: string) => {
     if (!value) return "Not available";
@@ -1435,162 +1444,202 @@ const CitizenHome: React.FC = () => {
               No grievances found for your account yet.
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-[260px,1fr]">
-              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-                {citizenComplaints.map((complaint) => {
-                  const isActive =
-                    selectedComplaint?.complaintNumber ===
-                    complaint.complaintNumber;
-                  return (
-                    <button
-                      type="button"
-                      key={complaint.id}
-                      onClick={() => fetchComplaintDetails(complaint)}
-                      className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                        isActive
-                          ? "border-blue-500 bg-blue-50/80 shadow-md"
-                          : "border-gray-100 bg-white shadow-sm hover:border-blue-200"
-                      }`}
-                    >
-                      <p className="text-[11px] uppercase tracking-[0.35em] text-gray-500">
-                        #{complaint.complaintNumber}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-gray-900">
-                        {complaint.subject}
-                      </p>
-                      <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                        <span>{formatReadableDate(complaint.createdAt)}</span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 font-semibold text-[10px] uppercase tracking-wide ${getStatusBadgeClasses(
-                            complaint.status
-                          )}`}
+            <>
+              {/* Search Input */}
+              <div className="mb-4">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search by subject or description..."
+                    value={trackSearchQuery}
+                    onChange={(e) => setTrackSearchQuery(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Filtered Complaints List */}
+              {filteredComplaints.length === 0 ? (
+                <div className="py-10 text-center text-sm text-gray-500">
+                  {trackSearchQuery.trim()
+                    ? "No grievances found matching your search."
+                    : "No grievances found for your account yet."}
+                </div>
+              ) : (
+                <div className="grid gap-6 lg:grid-cols-[260px,1fr]">
+                  <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                    {filteredComplaints.map((complaint) => {
+                      const isActive =
+                        selectedComplaint?.complaintNumber ===
+                        complaint.complaintNumber;
+                      return (
+                        <button
+                          type="button"
+                          key={complaint.id}
+                          onClick={() => fetchComplaintDetails(complaint)}
+                          className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                            isActive
+                              ? "border-blue-500 bg-blue-50/80 shadow-md"
+                              : "border-gray-100 bg-white shadow-sm hover:border-blue-200"
+                          }`}
                         >
-                          {formatStatusLabel(complaint.status)}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-5">
-                {isLoadingComplaintDetails ? (
-                  <div className="flex items-center justify-center py-16">
-                    <div className="h-10 w-10 animate-spin rounded-full border-2 border-b-transparent border-blue-600"></div>
-                  </div>
-                ) : complaintDetails ? (
-                  <>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.35em] text-gray-500">
-                          Complaint No.
-                        </p>
-                        <p className="text-2xl font-bold text-gray-900">
-                          {complaintDetails.complaint.complaintNumber}
-                        </p>
-                      </div>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusBadgeClasses(
-                          complaintDetails.complaint.status
-                        )}`}
-                      >
-                        {formatStatusLabel(complaintDetails.complaint.status)}
-                      </span>
-                    </div>
-                    <p className="mt-4 text-sm text-gray-700">
-                      {complaintDetails.complaint.description}
-                    </p>
-                    <div className="mt-5 grid grid-cols-1 gap-3 text-sm text-gray-700 sm:grid-cols-2">
-                      <div className="rounded-xl border border-white bg-white/80 p-3">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">
-                          Subject
-                        </p>
-                        <p className="mt-1 font-semibold text-gray-900">
-                          {complaintDetails.complaint.subject}
-                        </p>
-                      </div>
-                      <div className="rounded-xl border border-white bg-white/80 p-3">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">
-                          Priority
-                        </p>
-                        <p className="mt-1 font-semibold text-gray-900">
-                          {formatStatusLabel(
-                            complaintDetails.complaint.priority
-                          )}
-                        </p>
-                      </div>
-                      <div className="rounded-xl border border-white bg-white/80 p-3">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">
-                          Department
-                        </p>
-                        <p className="mt-1 font-semibold text-gray-900">
-                          {complaintDetails.complaint.assignedDepartment
-                            ? formatStatusLabel(
-                                complaintDetails.complaint.assignedDepartment
-                              )
-                            : "Not assigned"}
-                        </p>
-                      </div>
-                      <div className="rounded-xl border border-white bg-white/80 p-3">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">
-                          Filed On
-                        </p>
-                        <p className="mt-1 font-semibold text-gray-900">
-                          {formatReadableDate(
-                            complaintDetails.complaint.createdAt
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-6">
-                      <h4 className="text-xs font-semibold uppercase tracking-[0.35em] text-gray-500">
-                        History
-                      </h4>
-                      {complaintDetails.history?.length ? (
-                        <div className="mt-3 space-y-3 max-h-52 overflow-y-auto pr-1">
-                          {complaintDetails.history.map((entry) => (
-                            <div
-                              key={entry.id}
-                              className="rounded-xl border border-white bg-white/90 px-3 py-2 text-sm text-gray-700 shadow-sm"
+                          <p className="text-[11px] uppercase tracking-[0.35em] text-gray-500">
+                            #{complaint.complaintNumber}
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {complaint.subject}
+                          </p>
+                          <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                            <span>
+                              {formatReadableDate(complaint.createdAt)}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 font-semibold text-[10px] uppercase tracking-wide ${getStatusBadgeClasses(
+                                complaint.status
+                              )}`}
                             >
-                              <div className="flex items-center justify-between">
-                                <span className="font-semibold text-gray-900">
-                                  {formatStatusLabel(entry.status)}
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                  {formatReadableDate(entry.updatedAt)}
-                                </span>
-                              </div>
-                              {entry.remarks && (
-                                <p className="mt-1 text-xs text-gray-600">
-                                  {entry.remarks}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-2 text-xs text-gray-500">
-                          No history available yet.
-                        </p>
-                      )}
-                    </div>
-
-                    {complaintDetails.documents?.length ? (
-                      <p className="mt-4 text-xs text-gray-500">
-                        {complaintDetails.documents.length} attachment
-                        {complaintDetails.documents.length > 1 ? "s" : ""}{" "}
-                        linked with this grievance.
-                      </p>
-                    ) : null}
-                  </>
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-gray-500">
-                    Select a grievance to view its details.
+                              {formatStatusLabel(complaint.status)}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            </div>
+                  <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-5">
+                    {isLoadingComplaintDetails && !complaintDetails ? (
+                      <div className="flex items-center justify-center py-16">
+                        <div className="h-10 w-10 animate-spin rounded-full border-2 border-b-transparent border-blue-600"></div>
+                      </div>
+                    ) : complaintDetails ? (
+                      <div
+                        className={
+                          isLoadingComplaintDetails
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                        }
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.35em] text-gray-500">
+                              Complaint No.
+                            </p>
+                            <p className="text-2xl font-bold text-gray-900">
+                              {complaintDetails.complaint.complaintNumber}
+                            </p>
+                          </div>
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusBadgeClasses(
+                              complaintDetails.complaint.status
+                            )}`}
+                          >
+                            {formatStatusLabel(
+                              complaintDetails.complaint.status
+                            )}
+                          </span>
+                        </div>
+                        <p className="mt-4 text-sm text-gray-700">
+                          {complaintDetails.complaint.description}
+                        </p>
+                        <div className="mt-5 grid grid-cols-1 gap-3 text-sm text-gray-700 sm:grid-cols-2">
+                          <div className="rounded-xl border border-white bg-white/80 p-3">
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">
+                              Subject
+                            </p>
+                            <p className="mt-1 font-semibold text-gray-900">
+                              {complaintDetails.complaint.subject}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-white bg-white/80 p-3">
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">
+                              Priority
+                            </p>
+                            <p className="mt-1 font-semibold text-gray-900">
+                              {formatStatusLabel(
+                                complaintDetails.complaint.priority
+                              )}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-white bg-white/80 p-3">
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">
+                              Department
+                            </p>
+                            <p className="mt-1 font-semibold text-gray-900">
+                              {complaintDetails.complaint.assignedDepartment
+                                ? formatStatusLabel(
+                                    complaintDetails.complaint
+                                      .assignedDepartment
+                                  )
+                                : "Not assigned"}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-white bg-white/80 p-3">
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">
+                              Filed On
+                            </p>
+                            <p className="mt-1 font-semibold text-gray-900">
+                              {formatReadableDate(
+                                complaintDetails.complaint.createdAt
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-6">
+                          <h4 className="text-xs font-semibold uppercase tracking-[0.35em] text-gray-500">
+                            History
+                          </h4>
+                          {complaintDetails.history?.length ? (
+                            <div className="mt-3 space-y-3 max-h-52 overflow-y-auto pr-1">
+                              {complaintDetails.history.map((entry) => (
+                                <div
+                                  key={entry.id}
+                                  className="rounded-xl border border-white bg-white/90 px-3 py-2 text-sm text-gray-700 shadow-sm"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-semibold text-gray-900">
+                                      {formatStatusLabel(entry.status)}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      {formatReadableDate(entry.updatedAt)}
+                                    </span>
+                                  </div>
+                                  {entry.remarks && (
+                                    <p className="mt-1 text-xs text-gray-600">
+                                      {entry.remarks}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-xs text-gray-500">
+                              No history available yet.
+                            </p>
+                          )}
+                        </div>
+
+                        {complaintDetails.documents?.length ? (
+                          <p className="mt-4 text-xs text-gray-500">
+                            {complaintDetails.documents.length} attachment
+                            {complaintDetails.documents.length > 1
+                              ? "s"
+                              : ""}{" "}
+                            linked with this grievance.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                        Select a grievance to view its details.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </DialogBox>
       )}
