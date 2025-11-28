@@ -58,7 +58,7 @@ const PRIORITY_STYLES = {
 };
 
 const STATUS_CONFIG = {
-  CREATED: { label: 'New', color: 'bg-blue-100 text-blue-700' },
+  CREATED: { label: 'Created', color: 'bg-blue-100 text-blue-700' },
   ASSIGNED: { label: 'Assigned', color: 'bg-purple-100 text-purple-700' },
   IN_PROGRESS: { label: 'In Progress', color: 'bg-amber-100 text-amber-700' },
   RESOLVED: { label: 'Resolved', color: 'bg-emerald-100 text-emerald-700' },
@@ -66,6 +66,17 @@ const STATUS_CONFIG = {
   BLOCKED: { label: 'Blocked', color: 'bg-red-100 text-red-700' },
   CLOSED: { label: 'Closed', color: 'bg-slate-100 text-slate-700' },
   DUPLICATE: { label: 'Duplicate', color: 'bg-gray-100 text-gray-600' },
+};
+
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  CREATED: ['CREATED', 'ASSIGNED', 'REJECTED'],
+  ASSIGNED: ['ASSIGNED', 'IN_PROGRESS', 'BLOCKED'],
+  IN_PROGRESS: ['IN_PROGRESS', 'RESOLVED', 'BLOCKED'],
+  BLOCKED: ['BLOCKED', 'IN_PROGRESS'],
+  RESOLVED: ['RESOLVED', 'CLOSED'],
+  CLOSED: [], // No transitions allowed
+  REJECTED: [], // No transitions allowed
+  DUPLICATE: ['DUPLICATE', 'ASSIGNED'],
 };
 
 const DEPARTMENT_NAMES = {
@@ -828,6 +839,15 @@ const handleViewDocument = async (doc: any) => {
     return { ...ticket, ...tempChanges };
   }, [complaints, selectedTicketId, tempChanges]);
 
+  const selectedOriginalTicket = useMemo(() => {
+    if (!selectedTicketId) return null;
+    return complaints.find(c => c.id === selectedTicketId) || null;
+  }, [complaints, selectedTicketId]);
+
+  const visibleStatusKeys = selectedOriginalTicket?.status 
+  ? ALLOWED_TRANSITIONS[selectedOriginalTicket.status] || [] 
+  : Object.keys(STATUS_CONFIG);
+
   return (  
     <div className="h-screen flex flex-col bg-slate-50 text-slate-900 font-sans relative">
       {toast && (
@@ -860,7 +880,7 @@ const handleViewDocument = async (doc: any) => {
 
       <div className="px-6 py-4 grid grid-cols-5 gap-4 shrink-0">
         <MetricCard title="Total" value={stats.total} trend="All Tickets" type="neutral" />
-        <MetricCard title="New" value={facets.status.CREATED || 0} trend="Unattended" type="warning" />
+        <MetricCard title="Created" value={facets.status.CREATED || 0} trend="New" type="warning" />
         <MetricCard title="In Progress" value={facets.status.IN_PROGRESS || 0} trend="Active" type="neutral" />
         <MetricCard title="Critical" value={stats.critical} trend="High/Urgent" type="danger" />
         <MetricCard title="Resolved" value={facets.status.RESOLVED || 0} trend="Completed" type="success" /> 
@@ -998,49 +1018,55 @@ const handleViewDocument = async (doc: any) => {
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-[120px]">Created Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredData.map(complaint => (
-                  <tr 
-                    key={complaint.id} 
-                    onClick={() => { 
-                      setSelectedTicketId(complaint.id); 
-                      // setCommentText(''); 
-                      fetchTicketDetails(complaint.id);
-                      fetchComments(complaint.complaintId?.toString() || '');
-                      setTempChanges({}); 
-                    }} 
-                    className={`hover:bg-blue-50 cursor-pointer transition-colors group ${selectedTicketId === complaint.id ? 'bg-blue-50/60' : ''}`}
-                  >
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-gray-500 group-hover:text-blue-600 font-medium">
-                        #{complaint.complaintNumber.slice(-6)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{complaint.subject}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_CONFIG[complaint.status]?.color}`}>
-                        {STATUS_CONFIG[complaint.status]?.label || complaint.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className={`flex items-center gap-1.5 text-xs font-medium ${PRIORITY_STYLES[complaint.priority]}`}>
-                        {complaint.priority}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                        {complaint.assignedDepartment || 'Unassigned'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-gray-600">
-                        {new Date(complaint.createdAt).toLocaleDateString()}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                <tbody className="divide-y divide-gray-100">
+                {filteredData
+                  // 1. Create a shallow copy to avoid mutating the original data
+                  .slice() 
+                  // 2. Sort by Date: Descending (Newest first). 
+                  // Switch a and b to (a.createdAt - b.createdAt) for Oldest first.
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  // 3. Map the sorted data
+                  .map(complaint => (
+                    <tr 
+                      key={complaint.id} 
+                      onClick={() => { 
+                        setSelectedTicketId(complaint.id); 
+                        fetchTicketDetails(complaint.id);
+                        fetchComments(complaint.complaintId?.toString() || '');
+                        setTempChanges({}); 
+                      }} 
+                      className={`hover:bg-blue-50 cursor-pointer transition-colors group ${selectedTicketId === complaint.id ? 'bg-blue-50/60' : ''}`}
+                    >
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-xs text-gray-500 group-hover:text-blue-600 font-medium">
+                          #{complaint.complaintNumber.slice(-6)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{complaint.subject}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_CONFIG[complaint.status]?.color}`}>
+                          {STATUS_CONFIG[complaint.status]?.label || complaint.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className={`flex items-center gap-1.5 text-xs font-medium ${PRIORITY_STYLES[complaint.priority]}`}>
+                          {complaint.priority}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                          {complaint.assignedDepartment || 'Unassigned'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-gray-600">
+                          {new Date(complaint.createdAt).toLocaleDateString()}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -1246,7 +1272,7 @@ const handleViewDocument = async (doc: any) => {
                             value={tempChanges.status || selectedTicket.status}
                             onChange={(e) => handleTempChange('status', e.target.value)}
                           >
-                            {Object.keys(STATUS_CONFIG).map(s => (
+                            {visibleStatusKeys.map(s => (
                               <option key={s} value={s}>{STATUS_CONFIG[s as keyof typeof STATUS_CONFIG].label}</option>
                             ))}
                           </select>
