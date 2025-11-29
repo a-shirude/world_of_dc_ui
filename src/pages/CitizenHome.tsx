@@ -810,7 +810,7 @@ const CitizenHome: React.FC = () => {
 
         {/* Header Overlay - Fully Transparent on top of carousel */}
         <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-blue-900/90 via-blue-900/60 to-transparent backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-red-500">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               {/* Logo */}
               <div className="flex items-center space-x-4">
