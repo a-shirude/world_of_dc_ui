@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PackageCheck } from "lucide-react";
+import { CheckCircle2, PackageCheck } from "lucide-react";
 
 const MaterialsReceivedPage: React.FC = () => {
   const checklistItems = [
@@ -35,7 +35,7 @@ const MaterialsReceivedPage: React.FC = () => {
   };
 
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex items-start gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100">
           <PackageCheck className="h-5 w-5 text-emerald-700" />
@@ -67,7 +67,7 @@ const MaterialsReceivedPage: React.FC = () => {
               setSubmitted(false);
             }}
             placeholder="Enter polling station"
-            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-base text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
           />
         </div>
 
@@ -81,28 +81,38 @@ const MaterialsReceivedPage: React.FC = () => {
             {checklistItems.map((item) => (
               <label
                 key={item}
-                className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                className={`flex min-h-[44px] items-center gap-2 rounded-lg border px-3 py-2 text-base ${
+                  checkedItems.includes(item)
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                    : "border-gray-200 bg-white text-gray-700"
+                }`}
               >
                 <input
                   type="checkbox"
                   checked={checkedItems.includes(item)}
                   onChange={() => toggleItem(item)}
-                  className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                 />
                 <span>{item}</span>
+                {checkedItems.includes(item) ? (
+                  <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600" />
+                ) : null}
               </label>
             ))}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="sticky bottom-2 z-10 rounded-xl bg-white/95 p-2 backdrop-blur sm:static sm:bg-transparent sm:p-0">
           <button
             type="submit"
             disabled={!canSubmit}
-            className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-[44px] w-full rounded-xl bg-emerald-600 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2.5 sm:text-sm"
           >
             Submit Checklist
           </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
           <span className="text-xs text-gray-500">
             {checkedItems.length} item{checkedItems.length === 1 ? "" : "s"} selected
           </span>

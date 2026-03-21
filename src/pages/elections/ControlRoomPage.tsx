@@ -1,9 +1,9 @@
 import React from "react";
-import { Headset, PhoneCall } from "lucide-react";
+import { Headset, PhoneCall, Siren } from "lucide-react";
 
 const ControlRoomPage: React.FC = () => {
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex items-start gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-100">
           <Headset className="h-5 w-5 text-cyan-700" />
@@ -16,13 +16,23 @@ const ControlRoomPage: React.FC = () => {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="mt-5 inline-flex items-center rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-700"
-      >
-        <PhoneCall className="mr-2 h-4 w-4" />
-        9876543210
-      </button>
+      <div className="mt-5 space-y-3">
+        <button
+          type="button"
+          className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-3 text-base font-semibold text-white hover:bg-cyan-700"
+        >
+          <PhoneCall className="mr-2 h-4 w-4" />
+          Call: 9876543210
+        </button>
+
+        <button
+          type="button"
+          className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-base font-semibold text-cyan-800 hover:bg-cyan-100"
+        >
+          <Siren className="mr-2 h-4 w-4" />
+          Escalate Emergency
+        </button>
+      </div>
     </section>
   );
 };
