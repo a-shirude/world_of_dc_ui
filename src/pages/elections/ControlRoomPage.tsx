@@ -1,5 +1,5 @@
 import React from "react";
-import { Headset, PhoneCall, Siren } from "lucide-react";
+import { Headset, PhoneCall } from "lucide-react";
 
 const ControlRoomPage: React.FC = () => {
   return (
@@ -17,21 +17,14 @@ const ControlRoomPage: React.FC = () => {
       </div>
 
       <div className="mt-5 space-y-3">
-        <button
-          type="button"
+        <a
+          href="tel:9876543210"
+          aria-label="Call control room"
           className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-3 text-base font-semibold text-white hover:bg-cyan-700"
         >
           <PhoneCall className="mr-2 h-4 w-4" />
           Call: 9876543210
-        </button>
-
-        <button
-          type="button"
-          className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-base font-semibold text-cyan-800 hover:bg-cyan-100"
-        >
-          <Siren className="mr-2 h-4 w-4" />
-          Escalate Emergency
-        </button>
+        </a>
       </div>
     </section>
   );
