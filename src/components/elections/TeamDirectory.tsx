@@ -20,6 +20,20 @@ const TeamDirectory: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
   const [error, setError] = useState("");
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -51,13 +65,13 @@ const TeamDirectory: React.FC = () => {
     try {
       setError("");
       setIsLoading(true);
+      setSearched(true);
       const results = await electionsService.searchPollingParties({
         psName: psName.trim() || undefined,
         partyNo: partyNo.trim() || undefined,
         mobile: mobile.trim() || undefined,
       });
       setParties(results.slice(0, MAX_MEMBER_RESULTS));
-      setSearched(true);
     } catch (searchError: any) {
       setParties([]);
       setSearched(true);
@@ -86,6 +100,16 @@ const TeamDirectory: React.FC = () => {
         </div>
       </div>
 
+      {!isOnline ? (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+          Working Offline - Data will sync when connected.
+        </div>
+      ) : null}
+
+      {isLoadingOptions ? (
+        <p className="mt-3 text-sm text-gray-500">Loading station and party options...</p>
+      ) : null}
+
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -96,7 +120,7 @@ const TeamDirectory: React.FC = () => {
             onChange={(event) => setPsName(event.target.value)}
             disabled={isLoadingOptions}
             placeholder="Search or select polling station"
-            className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
           <datalist id="polling-stations-list">
             {options.pollingStations.map((station) => (
@@ -116,7 +140,7 @@ const TeamDirectory: React.FC = () => {
             onChange={(event) => setPartyNo(event.target.value)}
             disabled={isLoadingOptions}
             placeholder="Search or select party"
-            className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
           <datalist id="party-names-list">
             {options.partyNames.map((party) => (
@@ -130,25 +154,27 @@ const TeamDirectory: React.FC = () => {
         <label className="relative block">
           <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
-            type="text"
+            type="tel"
             value={mobile}
             onChange={(event) => setMobile(event.target.value)}
             placeholder="Search phone number"
-            className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
         </label>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="sticky bottom-2 z-10 mt-4 rounded-xl bg-white/95 p-2 backdrop-blur md:static md:bg-transparent md:p-0">
         <button
           type="button"
           onClick={handleSearch}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          className="min-h-[44px] w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white hover:bg-blue-700 md:w-auto md:py-2 md:text-sm"
           disabled={isLoading}
         >
           {isLoading ? "Searching..." : "Search Members"}
         </button>
+      </div>
 
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={() => {
@@ -174,6 +200,15 @@ const TeamDirectory: React.FC = () => {
       {!searched ? (
         <div className="mt-5 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">
           Search to view polling party details.
+        </div>
+      ) : isLoading ? (
+        <div className="mt-5 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5">
+          <div className="h-4 w-32 animate-pulse rounded bg-gray-200" />
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+            <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+            <div className="h-20 animate-pulse rounded-xl bg-gray-100 sm:col-span-2" />
+          </div>
         </div>
       ) : parties.length === 0 ? (
         <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">
