@@ -4,6 +4,7 @@ import {
   Search,
   MapPin,
   Phone,
+  PhoneCall,
   User,
   Hash,
   Navigation,
@@ -202,12 +203,14 @@ const VehicleLocatorPage: React.FC = () => {
                     icon={<Phone className="h-4 w-4 text-indigo-400" />}
                     label="Driver Mobile"
                     value={
-                      <a
-                        href={`tel:${v.driverMobile}`}
-                        className="font-medium text-indigo-600 underline-offset-2 hover:underline"
-                      >
-                        {v.driverMobile}
-                      </a>
+                      <div className="space-y-1">
+                        <a
+                          href={`tel:${v.driverMobile}`}
+                          className="inline-flex min-h-[40px] items-center rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-200"
+                        >
+                          Call : {v.driverMobile}
+                        </a>
+                      </div>
                     }
                   />
                 )}
@@ -227,14 +230,16 @@ const VehicleLocatorPage: React.FC = () => {
                     icon={<MapPin className="h-4 w-4 text-indigo-400" />}
                     label="Location"
                     value={
-                      <a
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${v.location.y},${v.location.x}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-indigo-600 underline-offset-2 hover:underline"
-                      >
-                        {v.location.y.toFixed(4)}, {v.location.x.toFixed(4)}
-                      </a>
+                      <div className="space-y-1">
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${v.location.y},${v.location.x}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-[40px] items-center rounded-full border border-blue-200 bg-blue-100 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-200"
+                        >
+                          View on Maps
+                        </a>
+                      </div>
                     }
                   />
                 )}
@@ -272,11 +277,11 @@ interface DetailRowProps {
 }
 
 const DetailRow: React.FC<DetailRowProps> = ({ icon, label, value }) => (
-  <div className="flex items-start gap-2">
+  <div className="flex items-start gap-2 rounded-lg bg-white/70 p-2">
     <span className="mt-0.5 shrink-0">{icon}</span>
     <div className="min-w-0">
       <p className="text-xs font-medium text-gray-400">{label}</p>
-      <p className="text-sm font-semibold text-gray-800 break-words">{value}</p>
+      <div className="text-sm font-semibold text-gray-800 break-words">{value}</div>
     </div>
   </div>
 );

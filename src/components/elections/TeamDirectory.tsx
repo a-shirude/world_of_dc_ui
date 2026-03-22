@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Car, MapPin, Phone, Search, Users } from "lucide-react";
+import { Car, MapPin, Phone, PhoneCall, Search, Users } from "lucide-react";
 import {
   electionsService,
   MAX_MEMBER_RESULTS,
@@ -274,15 +274,19 @@ const TeamDirectory: React.FC = () => {
                               <p className="text-sm font-medium text-gray-900">
                                 {entry.name}
                               </p>
-                              <p className="text-xs text-blue-700">
-                                {entry.mobile ? (
-                                  <a href={`tel:${entry.mobile}`} className="underline-offset-2 hover:underline">
-                                    {entry.mobile}
+                              {entry.mobile ? (
+                                <div className="mt-1 space-y-0.5">
+                                  <a
+                                    href={`tel:${entry.mobile}`}
+                                    className="inline-flex min-h-[36px] items-center rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800 hover:bg-emerald-200"
+                                  >
+                                    <PhoneCall className="mr-1.5 h-3.5 w-3.5" />
+                                    Call : {entry.mobile}
                                   </a>
-                                ) : (
-                                  "Mobile not available"
-                                )}
-                              </p>
+                                </div>
+                              ) : (
+                                <p className="mt-0.5 text-xs text-gray-400">Mobile not available</p>
+                              )}
                             </div>
                           </li>
                         ))
