@@ -78,13 +78,13 @@ const LocationUpdatePage: React.FC = () => {
         const { latitude, longitude } = pos.coords;
         setCoords({ x: longitude, y: latitude });
         setLocationDisplay(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-        setGpsMessage("GPS location captured.");
+        setGpsMessage("Location captured.");
         setSubmitError("");
         setSubmitSuccess(false);
         setIsLocating(false);
       },
       () => {
-        setGpsMessage("GPS unavailable. Remarks field is required.");
+        setGpsMessage("Location unavailable. Remarks field is required.");
         setIsLocating(false);
       }
     );
@@ -190,15 +190,18 @@ const LocationUpdatePage: React.FC = () => {
           <>
             {/* GPS Coordinates */}
             <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-4">
-              <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+              {/* <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                 GPS Coordinates <span className="text-red-500">*</span>
-              </label>
-              {locationDisplay ? (
+              </label> */}
+              {/* {locationDisplay ? (
                 <p className="mb-2 rounded-lg bg-teal-50 px-3 py-2 text-sm font-medium text-teal-800">
                   {locationDisplay}
                 </p>
               ) : (
                 <p className="mb-2 text-xs text-gray-400">No GPS captured yet.</p>
+              )} */}
+              {!locationDisplay && (
+                <p className="mb-2 text-xs text-gray-400">No location captured yet.</p>
               )}
               <button
                 type="button"
@@ -207,7 +210,7 @@ const LocationUpdatePage: React.FC = () => {
                 className="inline-flex min-h-[44px] items-center rounded-xl border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-800 hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <LocateFixed className="mr-2 h-4 w-4" />
-                {isLocating ? "Capturing GPS Location..." : "Use Current GPS Location"}
+                {isLocating ? "Capturing Location..." : "Use Current Location"}
               </button>
               {gpsMessage && (
                 <p className={`mt-2 text-sm ${coords ? "text-teal-700" : "text-amber-700"}`}>
@@ -232,7 +235,7 @@ const LocationUpdatePage: React.FC = () => {
                   setSubmitError("");
                   setSubmitSuccess(false);
                 }}
-                placeholder={gpsAvailable ? "e.g. Parked at polling station gate" : "GPS unavailable — describe location"}
+                placeholder={gpsAvailable ? "e.g. Parked at polling station gate" : "Location unavailable — describe address"}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-base text-gray-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
               />
             </div>
