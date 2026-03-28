@@ -28,6 +28,7 @@ import VehicleLocatorPage from "./pages/elections/VehicleLocatorPage";
 import Home from "./pages/Home";
 import Officer from "./pages/Officer";
 import Profile from "./pages/Profile";
+import TaskBoard from "./pages/TaskBoard";
 import AppShell from "./components/layout/AppShell";
 import { UserRole } from "./constants/enums";
 
@@ -105,6 +106,7 @@ const AppRoutes: React.FC = () => {
                   element={<CreateComplaint />}
                 />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/tasks" element={<TaskBoard />} />
                 <Route
                   path="/admin/approvals"
                   element={
@@ -134,6 +136,14 @@ const AppRoutes: React.FC = () => {
                 <Route path="*" element={<Navigate to="/customer" replace />} />
               </Routes>
             </Layout>
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/tasks"
+        element={
+          <RoleProtectedRoute allowedRoles={OFFICER_ROLES}>
+            <TaskBoard />
           </RoleProtectedRoute>
         }
       />
