@@ -8,9 +8,11 @@ import {
   Loader2,
   MapPin,
   Plus,
+  RefreshCw,
   Save,
   Search,
   SlidersHorizontal,
+  Trash2,
   User,
   X,
 } from "lucide-react";
@@ -20,8 +22,8 @@ import { taskService } from "../services/taskService";
 import {
   CreateTaskInput,
   Task,
+  TaskActivity,
   TaskAssignee,
-  TaskComment,
   TaskPriority,
   TaskScope,
   TaskStatus,
@@ -395,6 +397,7 @@ export default function TaskBoard() {
   const [showFilters, setShowFilters] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [assignees, setAssignees] = useState<TaskAssignee[]>([]);
+  const [overdueCount, setOverdueCount] = useState(0);
   const [filters, setFilters] = useState<ActiveFilters>(defaultFilters);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [tempChanges, setTempChanges] = useState<Partial<Task>>({});
@@ -404,14 +407,47 @@ export default function TaskBoard() {
     setToast({ message, type });
   };
 
+  const mergeTask = (incoming: Task) => {
+    setTasks((prev) => prev.map((item) => (item.id === incoming.id ? incoming : item)));
+  };
+
+  const refreshTaskDetail = async (taskId: string): Promise<Task | null> => {
+    try {
+      const [task, workflow] = await Promise.all([
+        taskService.getTaskById(taskId),
+        taskService.getWorkflow(taskId),
+      ]);
+
+      if (!task) return null;
+
+      const enrichedTask: Task = {
+        ...task,
+        activity: workflow.length > 0 ? workflow : task.activity,
+      };
+      mergeTask(enrichedTask);
+      return enrichedTask;
+    } catch (_error) {
+      showToast("Failed to refresh task details", "error");
+      return null;
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [taskData, assigneeData] = await Promise.all([
+      const [taskData, overdueData] = await Promise.all([
         taskService.getTasks(),
-        taskService.getAssignableOfficers(),
+        taskService.getOverdueTasks(),
       ]);
+
+      const assigneeData = taskService.getAssignableOfficers(taskData, {
+        id: userId,
+        name: userName,
+        department: Department.UNASSIGNED,
+      });
+
       setTasks(taskData);
+      setOverdueCount(overdueData.length);
       setAssignees(assigneeData);
     } catch (_error) {
       showToast("Failed to load tasks", "error");
@@ -422,7 +458,7 @@ export default function TaskBoard() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [userId, userName]);
 
   const facets = useMemo(() => {
     const status: Record<TaskStatus, number> = {
@@ -500,9 +536,9 @@ export default function TaskBoard() {
       open: tasks.filter((task) => task.status === "OPEN").length,
       inProgress: tasks.filter((task) => task.status === "IN_PROGRESS").length,
       done: tasks.filter((task) => task.status === "DONE").length,
-      overdue,
+      overdue: overdueCount || overdue,
     };
-  }, [tasks]);
+  }, [overdueCount, tasks]);
 
   const selectedTask = useMemo(() => {
     if (!selectedTaskId) return null;
@@ -529,22 +565,46 @@ export default function TaskBoard() {
 
     setSaving(true);
     try {
-      const payload: UpdateTaskInput = {
+      const existingTask = tasks.find((item) => item.id === selectedTaskId);
+      if (!existingTask) {
+        showToast("Task not found", "error");
+        return;
+      }
+
+      if (
+        typeof tempChanges.status !== "undefined" &&
+        tempChanges.status !== existingTask.status
+      ) {
+        const statusUpdated = await taskService.updateTaskStatus(selectedTaskId, tempChanges.status);
+        mergeTask(statusUpdated);
+      }
+
+      if (
+        "assignedToId" in tempChanges &&
+        tempChanges.assignedToId !== existingTask.assignedToId
+      ) {
+        const assignmentUpdated = await taskService.assignTask(selectedTaskId, tempChanges.assignedToId);
+        mergeTask(assignmentUpdated);
+      }
+
+      const patchPayload: Partial<UpdateTaskInput> = {
         updatedByName: userName,
-        title: tempChanges.title,
-        description: tempChanges.description,
-        status: tempChanges.status,
-        priority: tempChanges.priority,
-        department: tempChanges.department,
-        dueDate: tempChanges.dueDate,
-        scope: tempChanges.scope,
-        assignedToId: tempChanges.assignedToId,
-        assignedToName: tempChanges.assignedToName,
-        tags: tempChanges.tags,
       };
 
-      const updatedTask = await taskService.updateTask(selectedTaskId, payload);
-      setTasks((prev) => prev.map((item) => (item.id === selectedTaskId ? updatedTask : item)));
+      if (typeof tempChanges.title !== "undefined") patchPayload.title = tempChanges.title;
+      if (typeof tempChanges.description !== "undefined") patchPayload.description = tempChanges.description;
+      if (typeof tempChanges.priority !== "undefined") patchPayload.priority = tempChanges.priority;
+      if (typeof tempChanges.department !== "undefined") patchPayload.department = tempChanges.department;
+      if (typeof tempChanges.scope !== "undefined") patchPayload.scope = tempChanges.scope;
+      if (typeof tempChanges.dueDate !== "undefined") patchPayload.dueDate = tempChanges.dueDate;
+      if (typeof tempChanges.tags !== "undefined") patchPayload.tags = tempChanges.tags;
+
+      if (Object.keys(patchPayload).length > 1) {
+        const patched = await taskService.patchTask(selectedTaskId, patchPayload);
+        mergeTask(patched);
+      }
+
+      await refreshTaskDetail(selectedTaskId);
       setTempChanges({});
       showToast("Task updated", "success");
     } catch (_error) {
@@ -562,29 +622,39 @@ export default function TaskBoard() {
 
     setAddingComment(true);
     try {
-      const newComment: TaskComment = await taskService.addComment(selectedTaskId, {
-        text: commentText.trim(),
+      await taskService.addComment(selectedTaskId, {
+        message: commentText.trim(),
         authorId: userId,
         authorName: userName,
       });
-
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === selectedTaskId
-            ? {
-                ...task,
-                comments: [newComment, ...task.comments],
-                updatedAt: newComment.createdAt,
-              }
-            : task
-        )
-      );
+      await refreshTaskDetail(selectedTaskId);
       setCommentText("");
       showToast("Comment added", "success");
     } catch (_error) {
       showToast("Failed to add comment", "error");
     } finally {
       setAddingComment(false);
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!selectedTaskId) return;
+
+    const approved = window.confirm("Delete this task? This action cannot be undone.");
+    if (!approved) return;
+
+    setSaving(true);
+    try {
+      await taskService.deleteTask(selectedTaskId);
+      setTasks((prev) => prev.filter((task) => task.id !== selectedTaskId));
+      setSelectedTaskId(null);
+      setTempChanges({});
+      showToast("Task deleted", "success");
+      await loadData();
+    } catch (_error) {
+      showToast("Failed to delete task", "error");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -724,6 +794,13 @@ export default function TaskBoard() {
               >
                 <SlidersHorizontal className="w-4 h-4" />
               </button>
+              <button
+                onClick={loadData}
+                className="p-2 rounded hover:bg-gray-100 text-gray-500"
+                title="Refresh"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
               <span className="text-sm text-gray-500 font-medium pl-2 border-l border-gray-200">
                 Showing {filteredTasks.length} tasks
               </span>
@@ -751,9 +828,10 @@ export default function TaskBoard() {
                   {filteredTasks.map((task) => (
                     <tr
                       key={task.id}
-                      onClick={() => {
+                      onClick={async () => {
                         setSelectedTaskId(task.id);
                         setTempChanges({});
+                        await refreshTaskDetail(task.id);
                       }}
                       className={`hover:bg-blue-50 cursor-pointer transition-colors group ${
                         selectedTaskId === task.id ? "bg-blue-50/60" : ""
@@ -806,6 +884,13 @@ export default function TaskBoard() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleDeleteTask}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-70"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete
+                  </button>
                   <button
                     onClick={handleSave}
                     disabled={saving || Object.keys(tempChanges).length === 0}
@@ -1035,6 +1120,22 @@ export default function TaskBoard() {
                           className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                           placeholder="inspection, urgent"
                         />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1.5 block">Workflow</label>
+                        <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                          {(selectedTask.activity || []).length === 0 && (
+                            <div className="text-xs text-gray-400">No workflow events</div>
+                          )}
+                          {(selectedTask.activity || []).map((item: TaskActivity) => (
+                            <div key={item.id} className="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                              <div className="text-xs font-semibold text-gray-800">{item.action}</div>
+                              <div className="text-[11px] text-gray-500">{item.actorName}</div>
+                              <div className="text-[10px] text-gray-400">{new Date(item.createdAt).toLocaleString()}</div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>

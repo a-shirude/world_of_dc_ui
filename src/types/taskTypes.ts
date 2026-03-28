@@ -71,7 +71,7 @@ export interface UpdateTaskInput {
 }
 
 export interface AddTaskCommentInput {
-  text: string;
+  message: string;
   authorId: string;
   authorName: string;
 }
