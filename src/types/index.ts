@@ -273,13 +273,14 @@ export interface CreateSquadInput {
 }
 
 export interface CreateMemberInput {
-  squadId: string;
+  squadId?: string;
   name: string;
   role: string;
   phone: string;
 }
 
 export interface UpdateMemberInput {
+  squadId?: string;
   name?: string;
   role?: string;
   phone?: string;
