@@ -130,6 +130,21 @@ export const uploadActivityAttachments = async (
 };
 
 /**
+ * Get all members across all squads
+ */
+export const getAllMembers = async (): Promise<Member[]> => {
+  try {
+    const response = await api.get('/tracking/members');
+    const data = unwrapData<any>(response);
+    const rows = safeArray<any>(Array.isArray(data) ? data : data?.members || data?.items || []);
+    return rows.map(normalizeMember);
+  } catch (error) {
+    console.error('Error fetching all members:', error);
+    throw error;
+  }
+};
+
+/**
  * Create a new member
  */
 export const createMember = async (input: CreateMemberInput): Promise<Member> => {
