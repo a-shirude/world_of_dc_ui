@@ -249,7 +249,11 @@ export interface ActivityEvent {
   location: string;
   status: MemberStatus;
   address?: string;
-  description?: string;
+  notes?: string;
+  type?: string;
+  latitude?: number;
+  longitude?: number;
+  accuracy?: number;
   timestamp?: string;
   attachments?: ActivityAttachment[];
 }
@@ -273,13 +277,14 @@ export interface CreateSquadInput {
 }
 
 export interface CreateMemberInput {
-  squadId: string;
+  squadId?: string;
   name: string;
   role: string;
   phone: string;
 }
 
 export interface UpdateMemberInput {
+  squadId?: string;
   name?: string;
   role?: string;
   phone?: string;

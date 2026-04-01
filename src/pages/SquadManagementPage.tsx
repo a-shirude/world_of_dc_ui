@@ -79,6 +79,16 @@ const SquadManagementPage = () => {
     [selectedMemberId, selectedSquad]
   );
 
+  const allMembers = useMemo(
+    () => squads.flatMap((s) => s.members || []),
+    [squads]
+  );
+
+  const currentSquadMemberIds = useMemo(
+    () => selectedSquad?.members?.map((m) => m.id) || [],
+    [selectedSquad]
+  );
+
   if (loading) {
     return (
       <div className="flex-1 bg-gray-50 h-full flex items-center justify-center">
@@ -180,6 +190,9 @@ const SquadManagementPage = () => {
                 onDataChanged={loadSquads}
                 hideCreateSquad
                 hideMemberCrud
+                allMembers={allMembers}
+                allSquads={squads}
+                currentSquadMemberIds={currentSquadMemberIds}
               />
             </div>
             {selectedSquad ? (
