@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Car,
-  MapPin,
-  Phone,
-  PhoneCall,
-  Search,
-  Users,
-  Navigation,
-  X,
-} from "lucide-react";
+import { Car, Phone, PhoneCall, Search, Users, Navigation } from "lucide-react";
 import {
   electionsService,
   MAX_MEMBER_RESULTS,
@@ -17,6 +8,7 @@ import {
   PollingPartyMember,
   VehicleDetails,
 } from "../../services/electionsService";
+import { StationPicker, VehicleCell, SkeletonCards } from "./shared";
 
 const ROLE_LABELS: Record<string, string> = {
   PRESIDING_OFFICER: "Presiding Officer",
@@ -26,6 +18,7 @@ const ROLE_LABELS: Record<string, string> = {
   RESERVE_OFFICER: "Reserve Officer",
 };
 
+// ─── Main component ────────────────────────────────────────────────────────────
 const TeamDirectory: React.FC = () => {
   const [psName, setPsName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -124,18 +117,13 @@ const TeamDirectory: React.FC = () => {
     <section className="space-y-4">
       {/* ── Search card ─────────────────────────────────── */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-        {/* Header */}
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100">
             <Users className="h-5 w-5 text-blue-700" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
-              Find Your Team
-            </h2>
-            <p className="text-xs text-gray-500">
-              Search by polling station or mobile
-            </p>
+            <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Find Your Team</h2>
+            <p className="text-xs text-gray-500">Search by polling station or mobile</p>
           </div>
         </div>
 
@@ -145,67 +133,46 @@ const TeamDirectory: React.FC = () => {
           </div>
         )}
 
-        {/* Inputs */}
         <div className="mt-4 space-y-2.5">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              list="polling-stations-list"
-              type="text"
-              value={psName}
-              onChange={(e) => setPsName(e.target.value)}
-              disabled={isLoadingOptions}
-              placeholder={
-                isLoadingOptions ? "Loading stations…" : "Polling station name"
-              }
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-9 pr-3 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-            {psName && (
-              <button
-                type="button"
-                onClick={() => setPsName("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-            <datalist id="polling-stations-list">
-              {options.pollingStations.map((s) => (
-                <option key={s} value={s} />
-              ))}
-            </datalist>
-          </div>
+          {/* Custom dropdown */}
+          <StationPicker
+            value={psName}
+            onChange={setPsName}
+            options={options.pollingStations}
+            disabled={isLoadingOptions}
+          />
 
+          {/* Mobile input */}
           <div className="relative">
             <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               type="tel"
               value={mobile}
               onChange={(e) => setMobile(e.target.value)}
-              placeholder="Mobile number"
+              placeholder="Mobile number (optional)"
               className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-9 pr-3 text-sm text-gray-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
           </div>
         </div>
 
-        {/* Buttons */}
+        {/* Action buttons */}
         <div className="sticky bottom-16 z-10 mt-3 flex gap-2 sm:static">
           <button
             type="button"
             onClick={handleSearch}
             disabled={isLoading}
-            className="flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 active:scale-[0.98]"
+            className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 active:scale-[0.98]"
           >
             {isLoading ? (
-              <span className="flex items-center gap-2">
+              <>
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 Searching…
-              </span>
+              </>
             ) : (
-              <span className="flex items-center gap-2">
+              <>
                 <Search className="h-4 w-4" />
                 Search
-              </span>
+              </>
             )}
           </button>
           {searched && (
@@ -226,24 +193,20 @@ const TeamDirectory: React.FC = () => {
         )}
       </div>
 
-      {/* ── Empty / loading states ───────────────────────── */}
+      {/* ── Empty state ──────────────────────────────────── */}
       {!searched && !isLoading && (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-12 text-center">
           <Users className="mx-auto mb-2 h-8 w-8 text-gray-300" />
-          <p className="text-sm font-medium text-gray-400">
-            Search to view your team
-          </p>
+          <p className="text-sm font-medium text-gray-400">Search to view your team</p>
         </div>
       )}
 
-      {searched && isLoading && <SkeletonResult />}
+      {searched && isLoading && <SkeletonCards />}
 
       {searched && !isLoading && !error && party === null && (
         <div className="rounded-2xl border border-gray-200 bg-gray-50 py-12 text-center">
           <Users className="mx-auto mb-2 h-8 w-8 text-gray-300" />
-          <p className="text-sm font-medium text-gray-500">
-            No polling party found.
-          </p>
+          <p className="text-sm font-medium text-gray-500">No polling party found.</p>
           <p className="mt-1 text-xs text-gray-400">Try a different search.</p>
         </div>
       )}
@@ -256,9 +219,7 @@ const TeamDirectory: React.FC = () => {
             <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-200">
               Polling Station
             </p>
-            <p className="mt-1 text-lg font-bold leading-snug">
-              {party.psName || "—"}
-            </p>
+            <p className="mt-1 text-lg font-bold leading-snug">{party.psName || "—"}</p>
             <p className="mt-0.5 text-sm text-blue-100">PS No: {party.psNo || "—"}</p>
           </div>
 
@@ -269,8 +230,7 @@ const TeamDirectory: React.FC = () => {
                 key={v.id}
                 className="overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-sm"
               >
-                {/* Card header */}
-                <div className="flex items-center gap-3 bg-indigo-50 px-4 py-3 border-b border-indigo-100">
+                <div className="flex items-center gap-3 border-b border-indigo-100 bg-indigo-50 px-4 py-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
                     <Car className="h-4 w-4 text-indigo-700" />
                   </div>
@@ -278,9 +238,7 @@ const TeamDirectory: React.FC = () => {
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
                       Your Vehicle
                     </p>
-                    <p className="text-base font-bold text-indigo-900">
-                      {v.vehicleNo ?? "—"}
-                    </p>
+                    <p className="text-base font-bold text-indigo-900">{v.vehicleNo ?? "—"}</p>
                   </div>
                   {v.vehicleType && (
                     <span className="shrink-0 rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">
@@ -289,26 +247,18 @@ const TeamDirectory: React.FC = () => {
                   )}
                 </div>
 
-                {/* Vehicle details grid */}
                 <div className="grid grid-cols-2 gap-px bg-gray-100">
                   {v.capacity != null && (
                     <VehicleCell label="Capacity" value={`${v.capacity} seats`} />
                   )}
-                  {v.driverName && (
-                    <VehicleCell label="Driver" value={v.driverName} />
-                  )}
-                  {v.route && (
-                    <VehicleCell label="Route" value={v.route} fullWidth />
-                  )}
+                  {v.driverName && <VehicleCell label="Driver" value={v.driverName} />}
+                  {v.route && <VehicleCell label="Route" value={v.route} fullWidth />}
                   {v.parkingAddress && (
                     <VehicleCell label="Parking" value={v.parkingAddress} fullWidth />
                   )}
-                  {v.remarks && (
-                    <VehicleCell label="Remarks" value={v.remarks} fullWidth />
-                  )}
+                  {v.remarks && <VehicleCell label="Remarks" value={v.remarks} fullWidth />}
                 </div>
 
-                {/* Action buttons */}
                 <div className="flex gap-2 p-3">
                   {v.driverMobile && (
                     <a
@@ -341,7 +291,7 @@ const TeamDirectory: React.FC = () => {
           )}
 
           {/* Team members */}
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50 px-4 py-3">
               <Users className="h-4 w-4 text-blue-600" />
               <p className="text-sm font-semibold text-gray-700">Party Members</p>
@@ -349,28 +299,20 @@ const TeamDirectory: React.FC = () => {
                 {(party.members ?? []).filter((m: PollingPartyMember) => m.name).length}
               </span>
             </div>
-
             <ul className="divide-y divide-gray-100">
               {(party.members ?? [])
                 .filter((m: PollingPartyMember) => Boolean(m.name))
                 .map((m: PollingPartyMember, idx: number) => (
                   <li key={`${party.id}-${idx}`} className="flex items-center gap-3 px-4 py-3">
-                    {/* Avatar */}
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-600">
                       {(m.name || "?")[0].toUpperCase()}
                     </div>
-
-                    {/* Info */}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-gray-900">
-                        {m.name}
-                      </p>
+                      <p className="truncate text-sm font-semibold text-gray-900">{m.name}</p>
                       <p className="text-xs text-gray-500">
                         {ROLE_LABELS[m.role] || m.role.split("_").join(" ")}
                       </p>
                     </div>
-
-                    {/* Call button */}
                     {m.mobile ? (
                       <a
                         href={`tel:${m.mobile}`}
@@ -386,7 +328,6 @@ const TeamDirectory: React.FC = () => {
                     )}
                   </li>
                 ))}
-
               {(party.members ?? []).filter((m: PollingPartyMember) => m.name).length === 0 && (
                 <li className="px-4 py-6 text-center text-sm text-gray-400">
                   No member details available.
@@ -399,28 +340,5 @@ const TeamDirectory: React.FC = () => {
     </section>
   );
 };
-
-/** Vehicle detail cell for the grid */
-const VehicleCell: React.FC<{
-  label: string;
-  value: React.ReactNode;
-  fullWidth?: boolean;
-}> = ({ label, value, fullWidth }) => (
-  <div className={`bg-white px-3 py-2.5 ${fullWidth ? "col-span-2" : ""}`}>
-    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-      {label}
-    </p>
-    <p className="mt-0.5 text-sm font-medium text-gray-900 break-words">{value}</p>
-  </div>
-);
-
-/** Loading skeleton */
-const SkeletonResult: React.FC = () => (
-  <div className="space-y-4">
-    <div className="h-20 animate-pulse rounded-2xl bg-gray-200" />
-    <div className="h-32 animate-pulse rounded-2xl bg-gray-100" />
-    <div className="h-48 animate-pulse rounded-2xl bg-gray-100" />
-  </div>
-);
 
 export default TeamDirectory;
