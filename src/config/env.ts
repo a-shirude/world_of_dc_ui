@@ -13,7 +13,7 @@ export const config = {
   // API base URL - defaults to production URL if not specified
   apiBaseUrl:
     import.meta.env.VITE_API_BASE_URL ||
-    "https://world-of-dc-backend.onrender.com",
+    "https://world-of-dc-election.onrender.com",
 
   // File/media base URL - always points to remote storage server
   fileBaseUrl:
