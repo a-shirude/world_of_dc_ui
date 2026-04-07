@@ -74,12 +74,12 @@ const Elections: React.FC = () => {
     services.find((service) => service.route === "/elections/team-directory");
 
   const mobileActionServices = [
-    services.find((service) => service.route === "/elections/control-room"),
-    services.find((service) => service.route === "/elections/issues/new"),
+    // services.find((service) => service.route === "/elections/control-room"),
+    // services.find((service) => service.route === "/elections/issues/new"),
     services.find((service) => service.route === "/elections/team-directory"),
-    services.find((service) => service.route === "/elections/vehicle-locator"),
+    // services.find((service) => service.route === "/elections/vehicle-locator"),
     services.find((service) => service.route === "/elections/location-update"),
-    services.find((service) => service.route === "/elections/materials"),
+    // services.find((service) => service.route === "/elections/materials"),
   ].filter(Boolean) as typeof services;
 
   const mobileTabs = [
@@ -218,7 +218,7 @@ const Elections: React.FC = () => {
         </div>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 px-2 py-2 backdrop-blur lg:hidden">
+      {/* <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 px-2 py-2 backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-2xl grid-cols-4 gap-1">
           {mobileTabs.map((tab) => (
             <button
@@ -234,7 +234,7 @@ const Elections: React.FC = () => {
             </button>
           ))}
         </div>
-      </nav>
+      </nav> */}
     </div>
   );
 };
