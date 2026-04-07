@@ -71,7 +71,7 @@ const Elections: React.FC = () => {
 
   const activeService =
     services.find((service) => location.pathname === service.route) ||
-    services.find((service) => service.route === "/elections/control-room");
+    services.find((service) => service.route === "/elections/team-directory");
 
   const mobileActionServices = [
     services.find((service) => service.route === "/elections/control-room"),
