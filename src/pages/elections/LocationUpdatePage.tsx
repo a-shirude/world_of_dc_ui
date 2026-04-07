@@ -140,8 +140,8 @@ const LocationUpdatePage: React.FC = () => {
           <MapPin className="h-5 w-5 text-teal-700" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Update Vehicle Location</h2>
-          <p className="mt-1 text-sm text-gray-600">
+          <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Update Vehicle Location</h2>
+          <p className="text-xs text-gray-500">
             Select your vehicle and update the location.
           </p>
         </div>
@@ -150,9 +150,9 @@ const LocationUpdatePage: React.FC = () => {
       <form onSubmit={handleSubmit} className="mt-5 space-y-5">
         {/* Vehicle AC No */}
         <div>
-          <label htmlFor="ac-no" className="mb-1.5 block text-sm font-semibold text-gray-700">
+          {/* <label htmlFor="ac-no" className="mb-1.5 block text-sm font-semibold text-gray-700">
             AC No
-          </label>
+          </label> */}
           {mappingsError && (
             <div className="mb-2 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
               <span>{mappingsError}</span>
@@ -177,7 +177,7 @@ const LocationUpdatePage: React.FC = () => {
             type="text"
             value={acNo}
             onChange={handleAcNoChange}
-            placeholder="SIL/ 0123"
+            placeholder="BKL/0123"
             className="w-full rounded-xl border border-gray-200 px-4 py-3 text-base text-gray-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
           />
           <datalist id="ac-no-list">
